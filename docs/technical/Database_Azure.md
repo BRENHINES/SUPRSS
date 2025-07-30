@@ -65,8 +65,10 @@ CREATE DATABASE suprss
          CONNECTION LIMIT = -1;
 ```
 
-> En ce qui concerne le projet présent la création de la base de données s'est fait au travers d'une connexion àpgadmin sous Docker, qui est un outil de gestion de base de données PostgreSQL.
+> En ce qui concerne le projet présent la création de la base de données s'est fait au travers d'une connexion à pgadmin sous Docker, qui est un outil de gestion de base de données PostgreSQL.
 > L'image a été conteunérisée et déployée sur docker dans le fichier docker-compose.yml du projet, permettant ainsi de gérer la base de données PostgreSQL directement depuis l'interface web de pgAdmin.
+
+> Mais il est également possible d'accéder à la base de données ainsi créer avec DBeaver, un autre outil de gestion de base de données PostgreSQL, qui permet d'exécuter des requêtes SQL.
 
 Mais en seconde alternative pour faire cela, vous pouvez également utiliser la commande `psql` depuis votre terminal :
 
@@ -85,11 +87,11 @@ Mais aussi des alertes en cas de depassement de budget et de problème de connex
 
 ![img_2.png](../images/Alerting_rules_db.png)
 
->Exemple d'alerts : règle « CPU > 80 % pendant 5 min » envoyée par mail pour mise à jour du CPU.
+>Exemple d'alertes : règle « CPU > 80 % pendant 5 min » envoyée par mail pour mise à jour du CPU.
 
 ### 1.7. Intégration avec le backend
 
-Dans le dossier `backend`, nous avons configuré la connexion à la base de données PostgreSQL en utilisant les variables d'environnement suivantes :
+Dans le dossier `backend`, nous avons configuré la connexion à la base de données PostgreSQL (simplifiée comme ci dessous) en utilisant les variables d'environnement suivantes :
 
 ```python
 from pydantic_settings import BaseSettings, SettingsConfigDict
