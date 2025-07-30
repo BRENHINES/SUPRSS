@@ -1,17 +1,9 @@
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from .core.database import SessionLocal
+from .core.database import get_db
 
 app = FastAPI()
-
-# Vérification rapide de la connexion à la DB
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 @app.get("/health")
 def health_check(db: Session = Depends(get_db)):
