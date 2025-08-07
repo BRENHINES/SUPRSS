@@ -1,0 +1,214 @@
+  users {
+    id int [pk]
+    email varchar(255) [unique]
+    username varchar(50) [unique]
+    hashed_password varchar(255)
+    full_name varchar(100)
+    avatar_url varchar(500)
+    bio text
+    is_active boolean
+    is_verified boolean
+    is_superuser boolean
+    theme usertheme
+    font_size fontsize
+    articles_per_page int
+    auto_mark_read boolean
+    google_id varchar(100)
+    github_id varchar(100)
+    microsoft_id varchar(100)
+    total_feeds int
+    total_articles_read int
+    created_at timestamptz
+    updated_at timestamptz
+    last_login timestamptz
+    email_verified_at timestamptz
+  }
+
+  collections {
+    id int [pk]
+    name varchar(100)
+    description text
+    slug varchar(100)
+    is_public boolean
+    is_personal boolean
+    owner_id int [ref: > users.id]
+    allow_comments boolean
+    allow_chat boolean
+    auto_fetch_feeds boolean
+    total_feeds int
+    total_articles int
+    total_members int
+    created_at timestamptz
+    updated_at timestamptz
+    last_activity timestamptz
+  }
+
+  collection_members {
+    id int [pk]
+    collection_id int [ref: > collections.id]
+    user_id int [ref: > users.id]
+    can_read boolean
+    can_add_feeds boolean
+    can_edit_feeds boolean
+    can_delete_feeds boolean
+    can_comment boolean
+    can_chat boolean
+    can_invite boolean
+    is_admin boolean
+    is_active boolean
+    invited_by int [ref: > users.id]
+    invitation_token varchar(100)
+    invitation_accepted_at timestamptz
+    joined_at timestamptz
+    last_activity timestamptz
+  }
+
+  feeds {
+    id int [pk]
+    title varchar(200)
+    url varchar(500)
+    description text
+    website_url varchar(500)
+    language varchar(10)
+    status feedstatus
+    update_frequency int
+    priority int
+    rss_title varchar(200)
+    rss_description text
+    rss_image_url varchar(500)
+    rss_generator varchar(100)
+    rss_version varchar(10)
+    last_fetched_at timestamptz
+    last_modified varchar(100)
+    etag varchar(100)
+    last_build_date timestamptz
+    total_articles int
+    successful_fetches int
+    failed_fetches int
+    consecutive_failures int
+    last_error_message text
+    last_error_at timestamptz
+    collection_id int [ref: > collections.id]
+    created_by int [ref: > users.id]
+    created_at timestamptz
+    updated_at timestamptz
+  }
+
+  categories {
+    id int [pk]
+    name varchar(50) [unique]
+    color varchar(7)
+    icon varchar(50)
+    description text
+    created_at timestamptz
+  }
+
+  feed_categories {
+    id int [pk]
+    feed_id int [ref: > feeds.id]
+    category_id int [ref: > categories.id]
+    created_at timestamptz
+  }
+
+  articles {
+    id int [pk]
+    title varchar(300)
+    url varchar(1000)
+    guid varchar(500)
+    summary text
+    content text
+    author varchar(200)
+    published_at timestamptz
+    updated_at_source timestamptz
+    language varchar(10)
+    word_count int
+    reading_time int
+    image_url varchar(1000)
+    enclosure_url varchar(1000)
+    enclosure_type varchar(50)
+    enclosure_length int
+    total_reads int
+    total_favorites int
+    total_comments int
+    feed_id int [ref: > feeds.id]
+    created_at timestamptz
+    updated_at timestamptz
+  }
+
+  user_articles {
+    id int [pk]
+    user_id int [ref: > users.id]
+    article_id int [ref: > articles.id]
+    is_read boolean
+    is_favorite boolean
+    is_archived boolean
+    read_at timestamptz
+    favorited_at timestamptz
+    archived_at timestamptz
+    read_duration int
+    user_notes text
+    user_rating int
+    created_at timestamptz
+    updated_at timestamptz
+  }
+
+  comments {
+    id int [pk]
+    content text
+    parent_id int [ref: > comments.id]
+    thread_level int
+    is_edited boolean
+    is_deleted boolean
+    is_flagged boolean
+    upvotes int
+    downvotes int
+    article_id int [ref: > articles.id]
+    author_id int [ref: > users.id]
+    created_at timestamptz
+    updated_at timestamptz
+  }
+
+  chat_messages {
+    id int [pk]
+    content text
+    message_type chat_message_type_enum
+    metadata_json text
+    is_edited boolean
+    is_deleted boolean
+    collection_id int [ref: > collections.id]
+    author_id int [ref: > users.id]
+    reply_to_id int [ref: > chat_messages.id]
+    created_at timestamptz
+    updated_at timestamptz
+  }
+
+  import_jobs {
+    id int [pk]
+    filename varchar(255)
+    file_format fileformat
+    file_size int
+    status importstatus
+    progress_percentage int
+    total_feeds int
+    imported_feeds int
+    failed_feeds int
+    skipped_feeds int
+    success_message text
+    error_message text
+    error_log text
+    target_collection_id int [ref: > collections.id]
+    override_existing boolean
+    user_id int [ref: > users.id]
+    created_at timestamptz
+    started_at timestamptz
+    completed_at timestamptz
+  }
+
+  // --- enums -----------------------------------------------------------
+  enum feedstatus { active, inactive, error, deleted }
+  enum chat_message_type_enum { TEXT, SYSTEM, ACTICLE_SHARE, FEED_ADD }
+  enum usertheme { light, dark, auto }
+  enum fontsize { small, medium, large }
+  enum fileformat { opml, json, csv }
+  enum importstatus { pending, processing, completed, failed, cancelled }
+}
