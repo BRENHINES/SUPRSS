@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Boolean, Enum
+from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Boolean, Enum as PgEnum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import enum
@@ -7,10 +7,17 @@ from ..core.database import Base
 
 
 class MessageType(str, enum.Enum):
-    TEXT = "text"
-    SYSTEM = "system"
-    ARTICLE_SHARE = "article_share"
-    FEED_ADD = "feed_add"
+    TEXT = "TEXT"
+    SYSTEM = "SYSTEM"
+    ARTICLE_SHARE = "ACTICLE_SHARE"
+    FEED_ADD = "FEED_ADD"
+
+ChatMessageTypeEnum = PgEnum(
+    MessageType,
+    name="chat_message_type_enum",
+    create_type=False,
+    validate_strings=True,
+)
 
 
 class ChatMessage(Base):
@@ -18,7 +25,7 @@ class ChatMessage(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     content = Column(Text, nullable=False)
-    message_type = Column(Enum(MessageType), default=MessageType.TEXT, nullable=False)
+    message_type = Column(ChatMessageTypeEnum, nullable=False, server_default=MessageType.TEXT.value)
 
     # Métadonnées pour les messages spéciaux
     metadata_json = Column(Text, nullable=True)  # JSON pour article_id, feed_id, etc.

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Enum as PgEnum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import enum
@@ -11,6 +11,15 @@ class FeedStatus(str, enum.Enum):
     INACTIVE = "inactive"
     ERROR = "error"
     DELETED = "deleted"
+
+
+# Important: create_type=False pour éviter que SQLAlchemy essaie de créer l'enum automatiquement
+FeedStatusEnum = PgEnum(
+    FeedStatus,
+    name="feedstatus",
+    create_type=False,
+    validate_strings=True,
+)
 
 
 class Category(Base):
@@ -42,8 +51,8 @@ class Feed(Base):
     website_url = Column(String(500), nullable=True)  # URL du site web
     language = Column(String(10), nullable=True)  # Code ISO langue
 
-    # Configuration du flux
-    status = Column(Enum(FeedStatus), default=FeedStatus.ACTIVE, nullable=False)
+    # Configuration du flux - Utiliser l'enum avec create_type=False
+    status = Column(FeedStatusEnum, default=FeedStatus.ACTIVE.value, nullable=False)
     update_frequency = Column(Integer, default=60, nullable=False)  # Minutes
     priority = Column(Integer, default=5, nullable=False)  # 1-10, 10 = haute priorité
 
