@@ -1,18 +1,17 @@
 from functools import lru_cache
 from typing import List, Union
-
 from pydantic import AnyHttpUrl, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-import secrets
+from pathlib import Path
+
 
 class Settings(BaseSettings):
-    # ------------------------------------------------------------------ #
-    # Pydantic-settings meta
-    # ------------------------------------------------------------------ #
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file= ".env",
+        env_file_encoding="utf-8",
         env_ignore_empty=True,
-        extra="ignore"
+        extra="ignore",
+        case_sensitive=False
     )
 
     # ------------------------------------------------------------------ #
@@ -21,19 +20,31 @@ class Settings(BaseSettings):
     APP_NAME: str = Field(default="SUPRSS", env="APP_NAME")
     VERSION: str = Field(default="0.1.0", env="APP_VERSION")
     DEBUG: bool = Field(default=True, env="DEBUG")
-
+    ENV: str = Field(default="development", env="ENV")
 
     # ------------------------------------------------------------------ #
     # Sécurité
     # ------------------------------------------------------------------ #
-    SECRET_KEY: str = Field(default_factory=lambda: secrets.token_urlsafe(32))
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    jwt_secret_key: str = Field(..., env="JWT_SECRET_KEY")
+    refresh_secret_key: str = Field(..., env="REFRESH_SECRET_KEY")
+    jwt_algorithm: str = Field(default="HS256", env="JWT_ALGORITHM")
+    access_token_expire_minutes: int = Field(default=30, env="ACCESS_TOKEN_EXPIRE_MINUTES")
+    refresh_token_expire_days: int = Field(default=7, env="REFRESH_TOKEN_EXPIRE_DAYS")
 
     # ------------------------------------------------------------------ #
     # CORS
     # ------------------------------------------------------------------ #
-    CORS_ORIGINS: List[AnyHttpUrl] = []
+    CORS_ORIGINS: List[str] = Field(default_factory=list, env="CORS_ORIGINS")
+
+    # ------------------------------------------------------------------ #
+    # DATABASE
+    # ------------------------------------------------------------------ #
+    postgres_user: str = Field(..., env="POSTGRES_USER")
+    postgres_pass: str = Field(..., env="POSTGRES_PASS")
+    postgres_host: str = Field(..., env="POSTGRES_HOST")
+    postgres_db: str = Field(..., env="POSTGRES_DB")
+    postgres_port: str = Field(default="5432", env="POSTGRES_PORT")
+
 
     @classmethod
     def _split_or_list(cls, v: Union[str, List[str]]) -> List[str]:
@@ -49,12 +60,6 @@ class Settings(BaseSettings):
         if isinstance(v, str) and v:
             return [item.strip() for item in v.split(",")]
         return v
-
-    postgres_user: str   = Field(..., env="POSTGRES_USER")
-    postgres_pass: str   = Field(..., env="POSTGRES_PASS")
-    postgres_host: str   = Field(..., env="POSTGRES_HOST")
-    postgres_db:   str   = Field(..., env="POSTGRES_DB")
-    postgres_port: str   = Field(default="5432", env="POSTGRES_PORT")
 
     @property
     def database_url(self) -> str:
