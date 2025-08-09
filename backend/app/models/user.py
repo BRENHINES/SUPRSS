@@ -60,7 +60,8 @@ class User(Base):
 
     # Relations
     owned_collections = relationship("Collection", back_populates="owner", cascade="all, delete-orphan")
-    collection_memberships = relationship("CollectionMember", back_populates="user", cascade="all, delete-orphan")
+    collection_memberships = relationship("CollectionMember", back_populates="user", foreign_keys="CollectionMember.user_id", cascade="all, delete-orphan")
+    invitations_sent = relationship("CollectionMember", back_populates="inviter", foreign_keys="CollectionMember.invited_by",)
     user_articles = relationship("UserArticle", back_populates="user", cascade="all, delete-orphan")
     comments = relationship("Comment", back_populates="author", cascade="all, delete-orphan")
     chat_messages = relationship("ChatMessage", back_populates="author", cascade="all, delete-orphan")

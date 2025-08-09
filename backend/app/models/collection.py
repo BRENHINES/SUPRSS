@@ -76,8 +76,8 @@ class CollectionMember(Base):
 
     # Relations
     collection = relationship("Collection", back_populates="members")
-    user = relationship("User", back_populates="collection_memberships")
-    inviter = relationship("User", foreign_keys=[invited_by])
+    user = relationship("User", back_populates="collection_memberships", foreign_keys=[user_id])
+    inviter = relationship("User", back_populates="invitations_sent", foreign_keys=[invited_by])
 
     def __repr__(self):
         return f"<CollectionMember(collection_id={self.collection_id}, user_id={self.user_id})>"
