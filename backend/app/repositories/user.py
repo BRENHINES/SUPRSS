@@ -3,10 +3,15 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .base import SQLRepository
-from ..models.user import User  # adapte l'import si ton chemin diffère
+from ..models.user import User
+
 
 class UserRepository(SQLRepository[User]):
     model = User
+
+    def get_by_id(self, user_id: int) -> Optional[User]:
+        stmt = select(User).where(User.id == user_id)
+        return self.session.scalars(stmt).first()
 
     def get_by_email(self, email: str) -> Optional[User]:
         stmt = select(User).where(User.email == email)
