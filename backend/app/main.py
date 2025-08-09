@@ -16,6 +16,8 @@ from .core.logging import configure_logging
 from .core.exception_handlers import register_exception_handlers
 from .schemas.common import HealthResponse, ReadyResponse
 
+from ..app.routes import auth as auth_routes
+
 app = FastAPI(title=settings.APP_NAME, version=settings.VERSION, docs_url="/docs", redoc_url="/redoc")
 app_logger = logging.getLogger("app.requests")
 
@@ -61,3 +63,5 @@ def readiness(db: Session = Depends(get_db)):
     except Exception:
         # DB up mais migrations pas appliquées
         return {"Migration Status": "Database not-ready", "Migrations in sync": False, "Database Version": None, "timestamp": datetime.utcnow()}
+
+app.include_router(auth_routes.router)
