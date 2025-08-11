@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Boolean, Enum as PgEnum
+from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Boolean, Enum as PgEnum, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import enum
@@ -50,3 +50,18 @@ class ChatMessage(Base):
 
     def __repr__(self):
         return f"<ChatMessage(id={self.id}, collection_id={self.collection_id}, author_id={self.author_id})>"
+
+class ChatReaction(Base):
+    __tablename__ = "chat_reactions"
+
+    id = Column(Integer, primary_key=True)
+    message_id = Column(Integer, ForeignKey("chat_messages.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    emoji = Column(String(32), nullable=False)  # "👍", "❤️", ":fire:", etc.
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("message_id", "user_id", "emoji", name="uq_chat_reaction"),
+    )
+
+    message = relationship("ChatMessage", backref="reactions")

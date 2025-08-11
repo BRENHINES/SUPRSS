@@ -4,7 +4,7 @@ from .feed import Feed, FeedCategory, Category
 from .article import Article, UserArticle
 from .comment import Comment
 from .message import ChatMessage
-from .import_export import ImportJob
+from .import_job import ImportJob
 
 from ..core.database import Base
 
