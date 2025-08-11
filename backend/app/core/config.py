@@ -45,6 +45,25 @@ class Settings(BaseSettings):
     postgres_db: str = Field(..., env="POSTGRES_DB")
     postgres_port: str = Field(default="5432", env="POSTGRES_PORT")
 
+    # ------------------------------------------------------------------ #
+    # AZURE BLOB STORAGE
+    # ------------------------------------------------------------------ #
+    azure_storage_account: str = Field(..., env="AZURE_STORAGE_ACCOUNT")
+    azure_storage_key: str = Field(..., env="AZURE_STORAGE_KEY")
+    azure_blob_endpoint: str = Field(..., env="AZURE_BLOB_ENDPOINT")
+    azure_avatars_container: str = Field(default="avatars", env="AZURE_AVATARS_CONTAINER")
+    azure_avatar_sas_expire_min: int = Field(default=10, env="AZURE_AVATAR_SAS_EXPIRE_MIN")
+    azure_avatar_max_mb: int = Field(default=2, env="AZURE_AVATAR_MAX_MB")
+    azure_avatar_allowed_types: list[str] = Field(default_factory=list, env="AZURE_AVATAR_ALLOWED_TYPES")
+
+    # ------------------------------------------------------------------ #
+    # RSS
+    # ------------------------------------------------------------------ #
+    rss_fetch_timeout: int = Field(default=30, env="RSS_FETCH_TIMEOUT")
+    rss_user_agent: str = Field(default="SUPRSS/1.0", env="RSS_USER_AGENT")
+    rss_max_articles_per_feed: int = Field(default=1000, env="RSS_MAX_ARTICLES_PER_FEED")
+    rss_default_update_interval: int = Field(default=60, env="RSS_DEFAULT_UPDATE_INTERVAL")
+    rss_max_concurrent_fetches: int = Field(default=10, env="RSS_MAX_CONCURRENT_FETCHES")
 
     @classmethod
     def _split_or_list(cls, v: Union[str, List[str]]) -> List[str]:
@@ -79,6 +98,11 @@ class Settings(BaseSettings):
     @property
     def is_development(self) -> bool:
         return self.ENV == "development"
+
+    @property
+    def avatar_base_url(self) -> str:
+        # URL publique du conteneur d’avatars sans SAS
+        return f"{self.azure_blob_endpoint}/{self.azure_avatars_container}"
 
 @lru_cache
 def get_settings() -> Settings:

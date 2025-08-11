@@ -8,7 +8,7 @@ import logging
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from .core.database import get_db
-from ..app.api.users import router as users_router
+# from ..app.api.users import router as users_router
 from .core.config import settings
 from .core.errors import install_exception_handlers
 from .core.logging import configure_logging
@@ -17,6 +17,15 @@ from .core.exception_handlers import register_exception_handlers
 from .schemas.common import HealthResponse, ReadyResponse
 
 from ..app.routes import auth as auth_routes
+from ..app.routes import user as user_routes
+from ..app.routes import category as categories_routes
+from ..app.routes import feed as feeds_routes
+from ..app.routes import collection as collections_routes
+from ..app.routes import article as articles_routes
+from ..app.routes import comment as comments_routes
+from ..app.routes import chat as chat_routes
+from ..app.routes import imports as imports_routes
+from ..app.routes import fetch as fetch_routes
 
 app = FastAPI(title=settings.APP_NAME, version=settings.VERSION, docs_url="/docs", redoc_url="/redoc")
 app_logger = logging.getLogger("app.requests")
@@ -65,3 +74,12 @@ def readiness(db: Session = Depends(get_db)):
         return {"Migration Status": "Database not-ready", "Migrations in sync": False, "Database Version": None, "timestamp": datetime.utcnow()}
 
 app.include_router(auth_routes.router)
+app.include_router(user_routes.router)
+app.include_router(categories_routes.router)
+app.include_router(feeds_routes.router)
+app.include_router(collections_routes.router)
+app.include_router(articles_routes.router)
+app.include_router(comments_routes.router)
+app.include_router(chat_routes.router)
+app.include_router(imports_routes.router)
+app.include_router(fetch_routes.router)
