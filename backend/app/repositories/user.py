@@ -1,5 +1,5 @@
-from typing import Optional
-from sqlalchemy import select
+from typing import Optional, Sequence, Tuple
+from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
 from .base import SQLRepository
@@ -21,6 +21,15 @@ class UserRepository(SQLRepository[User]):
         stmt = select(User).where(User.username == username)
         return self.session.scalars(stmt).first()
 
+    def list(self, *, page: int = 1, size: int = 20) -> Sequence[User]:
+        stmt = (
+            select(User)
+            .order_by(User.id.desc())
+            .offset((page - 1) * size)
+            .limit(size)
+        )
+        return self.session.scalars(stmt).all()
+
     def create_user(
         self,
         *,
@@ -34,5 +43,13 @@ class UserRepository(SQLRepository[User]):
             email=email,
             username=username,
             hashed_password=hashed_password,
-            **extra,
+            **extra
         )
+
+    def list_paginated(self, *, page: int = 1, size: int = 20) -> Tuple[Sequence[User], int]:
+        page = max(1, page)
+        size = max(1, min(size, 100))
+        stmt = select(User).order_by(User.id).limit(size).offset((page - 1) * size)
+        items = self.session.scalars(stmt).all()
+        total = self.session.scalar(select(func.count()).select_from(User)) or 0
+        return items, total
