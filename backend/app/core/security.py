@@ -4,6 +4,7 @@ from typing import Optional, Dict, Any
 
 from jose import jwt, JWTError
 from passlib.context import CryptContext
+import hashlib
 
 from .config import settings
 
@@ -34,7 +35,7 @@ def create_access_token(sub: str, extra: Optional[Dict[str, Any]] = None) -> tup
     }
     if extra:
         payload.update(extra)
-    token = jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
+    token = jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
     ttl_seconds = int(settings.access_token_expire_minutes * 60)
     return token, ttl_seconds
 
@@ -48,20 +49,20 @@ def create_refresh_token(sub: str, session_id: int) -> tuple[str, datetime]:
         "iat": _now(),
         "jti": str(uuid.uuid4()),
     }
-    token = jwt.encode(payload, settings.refresh_secret, algorithm=settings.jwt_algorithm)
+    token = jwt.encode(payload, settings.refresh_secret_key, algorithm=settings.jwt_algorithm)
     return token, exp
 
 def decode_access(token: str) -> dict:
-    payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
+    payload = jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
     if payload.get("typ") != "access":
         raise JWTError("Invalid token type")
     return payload
 
 def decode_refresh(token: str) -> dict:
-    payload = jwt.decode(token, settings.refresh_secret, algorithms=[settings.jwt_algorithm])
+    payload = jwt.decode(token, settings.refresh_secret_key, algorithms=[settings.jwt_algorithm])
     if payload.get("typ") != "refresh":
         raise JWTError("Invalid token type")
     return payload
 
-
-# JWT utils seront ajoutés en Phase 2
+def refresh_hash(rt: str) -> str:
+    return hashlib.sha256(rt.encode("utf-8")).hexdigest()
