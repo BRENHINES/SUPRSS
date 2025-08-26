@@ -27,7 +27,6 @@ class SQLRepository(Generic[ModelT]):
     def create(self, **data: Any) -> ModelT:
         obj = self.model(**data)  # type: ignore[arg-type]
         self.session.add(obj)
-        # pas de commit ici: géré par l’UoW
         return obj
 
     # U
