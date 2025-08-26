@@ -39,7 +39,7 @@ class AuthService:
             user_id=user.id,
             refresh_token_hash=refresh_hash,
             user_agent=user_agent,
-            ip=ip,
+            ip_address=ip,
             expires_at=refresh_exp,
         )
         # regénérer un refresh avec le bon sid (session.id)

@@ -5,6 +5,8 @@ from ..core.database import get_db
 from ..schemas.auth import LoginRequest, TokenPair, RefreshRequest, LogoutRequest, UserPublic
 from ..services.auth_service import AuthService
 from ..api.deps import get_current_user
+from fastapi.security import OAuth2PasswordRequestForm
+from ..services.auth_service import AuthService
 
 router = APIRouter(prefix="/api/auth", tags=["Auth"])
 
@@ -27,6 +29,23 @@ def login(data: LoginRequest, request: Request, db: Session = Depends(get_db)):
         "refresh_expires_at": refresh_exp,
         "token_type": "bearer",
     }
+
+
+@router.post("/token")  # <-- endpoint utilisé par Swagger
+def token(form: OAuth2PasswordRequestForm = Depends(),
+          request: Request = None,
+          db: Session = Depends(get_db)):
+    svc = AuthService(db)
+    try:
+        access, ttl, refresh, refresh_exp = svc.login(
+            username_or_email=form.username,  # accepte username OU email
+            password=form.password,
+            user_agent=request.headers.get("user-agent") if request else None,
+            ip=request.client.host if request and request.client else None,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+    return {"access_token": access, "token_type": "bearer"}  # <== format minimal
 
 @router.post("/refresh", response_model=TokenPair)
 def refresh(data: RefreshRequest, request: Request, db: Session = Depends(get_db)):
