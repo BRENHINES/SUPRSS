@@ -105,7 +105,8 @@ def list_members(
 
 @router.post("/{collection_id}/members", response_model=MemberOut, status_code=201)
 def add_member(collection_id: int, data: MemberAdd, db: Session = Depends(get_db), user = Depends(get_current_user)):
-    m = CollectionService(db).add_member(collection_id=collection_id, actor_id=user.id, user_id=data.user_id, **data.model_dump())
+    payload = data.model_dump(exclude_unset=True)
+    m = CollectionService(db).add_member(collection_id=collection_id, actor_id=user.id, **payload)
     return m
 
 @router.patch("/{collection_id}/members/{member_id}", response_model=MemberOut)
