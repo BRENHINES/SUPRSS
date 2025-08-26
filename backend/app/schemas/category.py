@@ -25,3 +25,6 @@ class CategoryOut(BaseModel):
     description: Optional[str]
 
     model_config = {"from_attributes": True}
+
+class CategoryWithCountOut(CategoryOut):
+    feeds_count: int = 0
