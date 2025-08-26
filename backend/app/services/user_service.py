@@ -1,4 +1,6 @@
 from typing import Optional
+
+from psycopg2 import extras
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
@@ -29,15 +31,13 @@ class UserService:
         # Pré-check applicatif (meilleurs messages + UX)
         self._ensure_unique(email=email, username=username)
 
-        user = User(
+        # On passe par le repo comme dans ta version
+        user = self.users.create(
             email=email,
             username=username,
             hashed_password=hash_password(password) if password else None,
             **extras
         )
-
-        # On passe par le repo comme dans ta version
-        user = self.users.create(user)
 
         try:
             self.db.commit()
@@ -57,30 +57,36 @@ class UserService:
         self.db.refresh(user)
         return user
 
-    def update_user(self, user_id: int, *, email: Optional[str] = None, username: Optional[str] = None,
-                    password: Optional[str] = None, **extras) -> User:
+    def update_user(self, user_id: int, *, email: Optional[str] = None, username: Optional[str] = None, password: Optional[str] = None, **extra) -> User:
         user = self.users.get_by_id(user_id)
         if not user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-        self._ensure_unique(email=email or user.email, username=username or user.username, exclude_id=user.id)
+        # Unicity checks (si email/username changent)
+        self._ensure_unique(
+            email=email if email is not None else user.email,
+            username=username if username is not None else user.username,
+            exclude_id=user.id,
+        )
 
+        payload: dict = {}
         if email is not None:
-            user.email = email
+            payload["email"] = email
         if username is not None:
-            user.username = username
+            payload["username"] = username
         if password:
-            user.hashed_password = hash_password(password)
+            payload["hashed_password"] = hash_password(password)
 
-        # autres champs optionnels (full_name, avatar_url, prefs, etc.)
+        # autres champs optionnels (on ne prend que ceux non None et existants sur le modèle)
         for k, v in extras.items():
             if v is not None and hasattr(user, k):
-                setattr(user, k, v)
+                payload[k] = v
 
-        self.users.update(user)
+        updated = self.users.update(user, payload)  # <-- IMPORTANT: passer le dict
+
         self.db.commit()
-        self.db.refresh(user)
-        return user
+        self.db.refresh(updated)
+        return updated
 
     def set_avatar_url(self, *, user: User, url: str) -> User:
         user.avatar_url = url
@@ -136,3 +142,28 @@ class UserService:
         if old:
             delete_avatar_blob_by_url(old)
         return user
+
+    def delete_user(self, *, target_id: int, actor_id: int, hard_delete: bool = True) -> None:
+        target = self.users.get_by_id(target_id)
+        if not target:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+        actor = self.users.get_by_id(actor_id)
+        if not actor:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+
+        # Autorisation : admin ou self
+        if not (actor.is_superuser or actor.id == target.id):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+
+        # Optionnel: retirer l'avatar du blob storage
+        try:
+            if target.avatar_url:
+                try:
+                    AzureBlobStorage().delete_by_url(target.avatar_url)
+                except Exception:
+                    pass
+        finally:
+            # Hard delete
+            self.users.delete(target)  # flush
+            self.db.commit()

@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from ..core.database import get_db
 from ..repositories.user import UserRepository
-from ..schemas.user import UserOut, UserCreate, UserUpdate, PasswordChangeRequest
+from ..schemas.user import UserOut, UserCreate, UserUpdate, PasswordChangeRequest, UserFlagsUpdate
 from ..services.user_service import UserService
 from ..api.deps import get_current_user
 from ..services.blob_storage_service import AzureBlobStorage, make_avatar_blob_name, _service_client
@@ -93,15 +93,21 @@ def create_upload_url(data: UploadUrlRequest, user = Depends(get_current_user)):
     }
 
 @router.get("/{user_id}", response_model=UserOut, operation_id="users_get_by_id")
-def get_user(user_id: int, db: Session = Depends(get_db), _=Depends(get_current_user)):
+def get_user_by_id(user_id: int, db: Session = Depends(get_db), _=Depends(get_current_user)):
     user = UserService(db).users.get_by_id(user_id)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return user
 
-@router.patch("/{user_id}", response_model=UserOut, operation_id="users_update_by_id")
+@router.get("/username/{username}", response_model=UserOut, operation_id="users_get_by_name")
+def get_user_by_username(username: str, db: Session = Depends(get_db), _=Depends(get_current_user)):
+    user = UserService(db).users.get_by_username(username)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return user
+
+"""@router.patch("/{user_id}", response_model=UserOut, operation_id="users_update_by_id")
 def update_user(user_id: int, data: UserUpdate, db: Session = Depends(get_db), me = Depends(get_current_user)):
-    # l’utilisateur peut modifier son profil; l’admin peut modifier n’importe qui
     if me.id != user_id and not me.is_superuser:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed")
     svc = UserService(db)
@@ -114,7 +120,30 @@ def update_user(user_id: int, data: UserUpdate, db: Session = Depends(get_db), m
         avatar_url=data.avatar_url,
         bio=data.bio,
     )
-    return user
+    return user"""
+
+@router.patch("/{user_id}", response_model=UserOut, operation_id="users_update_by_id")
+def update_user(user_id: int, data: UserUpdate, db: Session = Depends(get_db), me = Depends(get_current_user)):
+    svc = UserService(db)
+    payload = data.model_dump(exclude_unset=True)
+    if not me.is_superuser:
+        # empêcher un non-admin de s’auto-promouvoir, etc.
+        for forbidden in ("is_superuser", "is_active"):
+            payload.pop(forbidden, None)
+    updated = svc.update_user(user_id, **payload)
+    return updated
+
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+def delete_me(db: Session = Depends(get_db), me = Depends(get_current_user)):
+    svc = UserService(db)
+    svc.delete_user(target_id=me.id, actor_id=me.id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_admin)])
+def admin_delete_user(user_id: int, db: Session = Depends(get_db), me = Depends(get_current_user)):
+    svc = UserService(db)
+    svc.delete_user(target_id=user_id, actor_id=me.id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 # ---------- Avatar - SAS (recommandé) ----------
 @router.patch("/me/avatar", operation_id="users_me_avatar_set")
@@ -223,3 +252,26 @@ def change_my_password(
         new_password=payload.new_password,
     )
     return Response(status_code=204)
+
+@router.patch("/{user_id}/flags", response_model=UserOut, dependencies=[Depends(get_current_user)])
+def update_user_flags(
+    user_id: int,
+    data: UserFlagsUpdate,
+    db: Session = Depends(get_db),
+):
+    repo = UserRepository(db)
+    u = repo.get_by_id(user_id)
+    if not u:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    if data.is_superuser is not None:
+        u.is_superuser = data.is_superuser
+    if data.is_active is not None:
+        u.is_active = data.is_active
+    if data.is_verified is not None:
+        u.is_verified = data.is_verified
+
+    db.add(u)
+    db.commit()
+    db.refresh(u)
+    return u
