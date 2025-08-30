@@ -6,22 +6,26 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# system deps (optional)
+# libs système utiles (psycopg2, compilation)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential libpq-dev curl && \
     rm -rf /var/lib/apt/lists/*
 
-# requirements
+# Dépendances
 COPY backend/requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir -r /app/requirements.txt
+RUN python -m pip install --upgrade pip && \
+    pip install --no-cache-dir -r /app/requirements.txt
 
-# app source
-COPY backend /app
+# Code
+COPY backend/ /app/
 
-# Expose port
+# Pour être sûr que `import app` marche et qu'Alembic trouve son ini
+ENV PYTHONPATH=/app \
+    ALEMBIC_CONFIG=/app/alembic.ini \
+    PORT=8000
+
+# Expose (informative)
 EXPOSE 8000
 
-# Alembic migrations au démarrage (option recommandé)
-# Tu peux aussi le gérer via entrypoint.sh
-CMD alembic upgrade head && \
-    uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
+# Migrations + serveur. Render fournit $PORT : on s'aligne dessus.
+CMD [ "sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}" ]
