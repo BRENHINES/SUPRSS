@@ -3,8 +3,7 @@ from typing import Optional, Sequence, Tuple
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
 
-from ..models.collection import (Collection,  # adapte si besoin
-                                 CollectionMember)
+from ..models.collection import Collection, CollectionMember  # adapte si besoin
 from .base import SQLRepository
 
 

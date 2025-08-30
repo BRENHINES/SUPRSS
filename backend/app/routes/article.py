@@ -12,8 +12,12 @@ from ..models.article import Article, UserArticle
 from ..models.collection import Collection, CollectionMember
 from ..models.feed import Feed
 from ..repositories.user_article import UserArticleRepository
-from ..schemas.article import (ArticleOut, ArticleUserState, ArticleWithState,
-                               InteractionUpdate)
+from ..schemas.article import (
+    ArticleOut,
+    ArticleUserState,
+    ArticleWithState,
+    InteractionUpdate,
+)
 from ..services.article_service import ArticleService
 
 router = APIRouter(prefix="/api", tags=["Articles"])

@@ -1,12 +1,19 @@
 from typing import Optional
 
-from fastapi import (APIRouter, BackgroundTasks, Depends, File, Form,
-                     HTTPException, UploadFile, status)
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    UploadFile,
+    status,
+)
 from sqlalchemy.orm import Session
 
 from ..api.deps import get_current_user
-from ..core.database import (  # SessionLocal pour la tâche de fond
-    SessionLocal, get_db)
+from ..core.database import SessionLocal, get_db  # SessionLocal pour la tâche de fond
 from ..models.import_job import FileFormat, ImportStatus
 from ..repositories.import_job import ImportJobRepository
 from ..services.import_service import ImportService
