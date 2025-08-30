@@ -16,7 +16,6 @@ COPY backend/requirements.txt /app/requirements.txt
 RUN python -m pip install --upgrade pip && pip install -r /app/requirements.txt
 
 # copie tout le code backend
-COPY . /app
 COPY backend /app/backend
 COPY alembic.ini /app/alembic.ini
 
@@ -25,4 +24,4 @@ ENV PYTHONPATH=/app
 EXPOSE 8000
 
 # Render fournit $PORT ; on le respecte. On essaie les migrations mais on ne crash pas si ça échoue.
-CMD bash -lc "alembic upgrade head || true; uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"
+CMD bash -lc "alembic upgrade head || true; uvicorn backend.app.main:app --host 0.0.0.0 --port ${PORT:-8000}"
