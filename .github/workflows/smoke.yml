@@ -1,0 +1,10 @@
+name: Smoke
+on:
+  push: { branches: [ master ] }
+  workflow_dispatch:
+jobs:
+  ok:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "Branch=${{ github.ref }} / Actor=${{ github.actor }}"

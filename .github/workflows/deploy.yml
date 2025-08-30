@@ -2,11 +2,15 @@ name: Deploy-Backend
 
 on:
   push:
-    branches: [ "**" ]
+    branches: [ master ]
   workflow_dispatch: {}
 
 env:
   IMAGE_NAME: suprss-api
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   deploy:
