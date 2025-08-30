@@ -5,14 +5,7 @@ from ..api.deps import get_current_user, require_admin
 from ..core.database import get_db
 from ..repositories.collection import CollectionRepository
 from ..repositories.collection_member import CollectionMemberRepository
-from ..schemas.collection import (
-    CollectionCreate,
-    CollectionOut,
-    CollectionUpdate,
-    MemberAdd,
-    MemberOut,
-    MemberUpdate,
-)
+from ..schemas.collection import CollectionCreate, CollectionOut, CollectionUpdate, MemberAdd, MemberOut, MemberUpdate
 from ..services.collection_service import CollectionService
 
 router = APIRouter(prefix="/api/collections", tags=["Collections"])

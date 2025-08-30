@@ -4,13 +4,7 @@ from sqlalchemy.orm import Session
 
 from ..api.deps import get_current_user
 from ..core.database import get_db
-from ..schemas.auth import (
-    LoginRequest,
-    LogoutRequest,
-    RefreshRequest,
-    TokenPair,
-    UserPublic,
-)
+from ..schemas.auth import LoginRequest, LogoutRequest, RefreshRequest, TokenPair, UserPublic
 from ..services.auth_service import AuthService
 
 router = APIRouter(prefix="/api/auth", tags=["Auth"])

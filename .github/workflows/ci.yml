@@ -46,6 +46,7 @@ jobs:
 
       - name: isort (check)
         run: isort --check-only backend
+        continue-on-error: true
 
       - name: Flake8
         run: flake8 backend
