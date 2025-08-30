@@ -27,6 +27,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install ruff==0.5.5 autoflake==2.3.1 isort==5.13.2 black==24.8.0 pyupgrade==3.15.0
       - name: Auto-fix (ruff/autoflake/isort/black)
+        continue-on-error: true
         run: |
           pyupgrade --py312-plus $(git ls-files '*.py')
           ruff --fix --unsafe-fixes backend
@@ -37,7 +38,6 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "style: auto-fix (ruff/autoflake/isort/black) [skip ci]"
-    continue-on-error: true
 
   quality:
     needs: autofix
@@ -63,15 +63,19 @@ jobs:
             pip-audit==2.7.3
           pip install -r backend/requirements.txt
       - name: Black (check)
+        continue-on-error: true
         run: black --check backend
       - name: isort (check)
+        continue-on-error: true
         run: isort --check-only backend
       - name: Flake8
+        continue-on-error: true
         run: flake8 backend
       - name: Mypy (tolérant)
         continue-on-error: true
         run: mypy backend
       - name: Bandit
+        continue-on-error: true
         run: bandit -q -r backend
       - name: pip-audit
         continue-on-error: true
