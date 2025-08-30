@@ -6,7 +6,9 @@ from datetime import datetime, timedelta, timezone
 from typing import BinaryIO
 from urllib.parse import urlparse
 
-from azure.storage.blob import BlobSasPermissions, BlobServiceClient, ContentSettings, PublicAccess, generate_blob_sas
+from azure.storage.blob import (BlobSasPermissions, BlobServiceClient,
+                                ContentSettings, PublicAccess,
+                                generate_blob_sas)
 
 from ..core.config import settings
 

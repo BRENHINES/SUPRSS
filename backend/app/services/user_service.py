@@ -8,7 +8,8 @@ from sqlalchemy.orm import Session
 from ..core.security import hash_password, verify_password
 from ..models.user import User
 from ..repositories.user import UserRepository
-from ..services.blob_storage_service import AzureBlobStorage, delete_avatar_blob_by_url
+from ..services.blob_storage_service import (AzureBlobStorage,
+                                             delete_avatar_blob_by_url)
 
 
 class UserService:

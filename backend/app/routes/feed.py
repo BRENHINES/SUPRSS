@@ -4,7 +4,8 @@ from sqlalchemy.orm import Session
 from ..api.deps import get_current_user
 from ..core.database import get_db
 from ..repositories.feed import FeedRepository
-from ..schemas.feed import FeedAttachCategories, FeedCreate, FeedOut, FeedUpdate
+from ..schemas.feed import (FeedAttachCategories, FeedCreate, FeedOut,
+                            FeedUpdate)
 from ..services.feed_service import FeedService
 
 router = APIRouter(prefix="/api", tags=["Feeds"])

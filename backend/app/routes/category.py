@@ -6,7 +6,8 @@ from ..api.deps import get_current_user, require_admin
 from ..core.database import get_db
 from ..models.feed import Feed, FeedCategory
 from ..repositories.category import CategoryRepository
-from ..schemas.category import CategoryCreate, CategoryOut, CategoryUpdate, CategoryWithCountOut
+from ..schemas.category import (CategoryCreate, CategoryOut, CategoryUpdate,
+                                CategoryWithCountOut)
 from ..schemas.common import PageMeta
 from ..schemas.feed import FeedOut
 from ..services.category_service import CategoryService

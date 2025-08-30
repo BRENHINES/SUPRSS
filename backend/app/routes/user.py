@@ -2,7 +2,8 @@ from datetime import datetime
 from typing import List, Optional
 
 from azure.storage.blob import ContentSettings
-from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile, status
+from fastapi import (APIRouter, Depends, File, HTTPException, Query, Response,
+                     UploadFile, status)
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -10,13 +11,11 @@ from ..api.deps import get_current_user, require_admin
 from ..core.config import settings
 from ..core.database import get_db
 from ..repositories.user import UserRepository
-from ..schemas.user import PasswordChangeRequest, UserCreate, UserFlagsUpdate, UserOut, UserUpdate
-from ..services.blob_storage_service import (
-    AzureBlobStorage,
-    _service_client,
-    generate_avatar_upload_sas,
-    make_avatar_blob_name,
-)
+from ..schemas.user import (PasswordChangeRequest, UserCreate, UserFlagsUpdate,
+                            UserOut, UserUpdate)
+from ..services.blob_storage_service import (AzureBlobStorage, _service_client,
+                                             generate_avatar_upload_sas,
+                                             make_avatar_blob_name)
 from ..services.user_service import UserService
 
 router = APIRouter(prefix="/api/users", tags=["Users"])

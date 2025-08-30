@@ -8,19 +8,16 @@ from sqlalchemy.orm import Session
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
-from ..app.routes import (
-    article as articles_routes,
-    auth as auth_routes,
-    category as categories_routes,
-    chat as chat_routes,
-    collection as collections_routes,
-    comment as comments_routes,
-    feed as feeds_routes,
-    fetch as fetch_routes,
-    imports as imports_routes,
-    user as user_routes,
-)
-
+from ..app.routes import article as articles_routes
+from ..app.routes import auth as auth_routes
+from ..app.routes import category as categories_routes
+from ..app.routes import chat as chat_routes
+from ..app.routes import collection as collections_routes
+from ..app.routes import comment as comments_routes
+from ..app.routes import feed as feeds_routes
+from ..app.routes import fetch as fetch_routes
+from ..app.routes import imports as imports_routes
+from ..app.routes import user as user_routes
 # from ..app.api.users import router as users_router
 from .core.config import settings
 from .core.database import get_db

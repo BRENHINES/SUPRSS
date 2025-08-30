@@ -3,13 +3,9 @@ from typing import Optional, Tuple
 
 from sqlalchemy.orm import Session
 
-from ..core.security import (
-    create_access_token,
-    create_refresh_token,
-    decode_refresh,
-    get_password_hash,
-    verify_password,
-)
+from ..core.security import (create_access_token, create_refresh_token,
+                             decode_refresh, get_password_hash,
+                             verify_password)
 from ..models.user import User
 from ..repositories.session import SessionRepository
 from ..repositories.user import UserRepository

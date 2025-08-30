@@ -11,58 +11,67 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  quality:
+  autofix:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-
+    permissions:
+      contents: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pip"
-
-      - name: Install dev tools
+      - name: Install auto-fix tools
         run: |
           python -m pip install --upgrade pip
-          pip install \
-            black==24.8.0 \
-            isort==5.13.2 \
-            flake8==7.1.1 \
-            flake8-bugbear==24.4.26 \
-            flake8-comprehensions==3.14.0 \
-            mypy==1.10.0 \
-            bandit==1.7.9 \
-            pip-audit==2.7.3
-          # dépendances du projet (adapter si tu utilises poetry)
-          pip install -r backend/requirements.txt
-
-      - name: Black (check)
-        run: black --check backend
-        continue-on-error: true
-
-      - name: isort (check)
-        run: isort --check-only backend
-        continue-on-error: true
-
-      - name: Flake8
-        run: flake8 backend
-
-      - name: Mypy (tolérant au début)
-        continue-on-error: true
-        run: mypy backend
-
-      - name: Bandit (sécurité)
-        run: bandit -q -r backend
-
-      - name: pip-audit (vulnérabilités)
-        continue-on-error: true
-        run: pip-audit -r backend/requirements.txt
-
-      - name: Smoke tests (facultatif si pas de tests encore)
+          pip install ruff==0.5.5 autoflake==2.3.1 isort==5.13.2 black==24.8.0 pyupgrade==3.15.0
+      - name: Auto-fix (ruff/autoflake/isort/black)
         run: |
-          pip install pytest
-          pytest -q || true
+          pyupgrade --py312-plus $(git ls-files '*.py')
+          ruff --fix --unsafe-fixes backend
+          autoflake -r -i --remove-all-unused-imports --remove-unused-variables --expand-star-imports backend
+          isort backend
+          black backend
+      - name: Commit formatted code
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "style: auto-fix (ruff/autoflake/isort/black) [skip ci]"
+
+    quality:
+      needs: autofix
+      runs-on: ubuntu-latest
+      timeout-minutes: 15
+      steps:
+        - uses: actions/checkout@v4
+        - uses: actions/setup-python@v5
+          with:
+            python-version: "3.12"
+            cache: "pip"
+        - name: Install dev tools
+          run: |
+            python -m pip install --upgrade pip
+            pip install \
+              black==24.8.0 \
+              isort==5.13.2 \
+              flake8==7.1.1 \
+              flake8-bugbear==24.4.26 \
+              flake8-comprehensions==3.14.0 \
+              mypy==1.10.0 \
+              bandit==1.7.9 \
+              pip-audit==2.7.3
+            pip install -r backend/requirements.txt
+        - name: Black (check)
+          run: black --check backend
+        - name: isort (check)
+          run: isort --check-only backend
+        - name: Flake8
+          run: flake8 backend
+        - name: Mypy (tolérant)
+          continue-on-error: true
+          run: mypy backend
+        - name: Bandit
+          run: bandit -q -r backend
+        - name: pip-audit
+          continue-on-error: true
+          run: pip-audit -r backend/requirements.txt
