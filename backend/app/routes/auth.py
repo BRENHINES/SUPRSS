@@ -1,14 +1,15 @@
-from fastapi import APIRouter, Depends, Request, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from ..core.database import get_db
-from ..schemas.auth import LoginRequest, TokenPair, RefreshRequest, LogoutRequest, UserPublic
-from ..services.auth_service import AuthService
 from ..api.deps import get_current_user
-from fastapi.security import OAuth2PasswordRequestForm
+from ..core.database import get_db
+from ..schemas.auth import (LoginRequest, LogoutRequest, RefreshRequest,
+                            TokenPair, UserPublic)
 from ..services.auth_service import AuthService
 
 router = APIRouter(prefix="/api/auth", tags=["Auth"])
+
 
 @router.post("/login", response_model=TokenPair)
 def login(data: LoginRequest, request: Request, db: Session = Depends(get_db)):
@@ -32,9 +33,11 @@ def login(data: LoginRequest, request: Request, db: Session = Depends(get_db)):
 
 
 @router.post("/token")  # <-- endpoint utilisé par Swagger
-def token(form: OAuth2PasswordRequestForm = Depends(),
-          request: Request = None,
-          db: Session = Depends(get_db)):
+def token(
+    form: OAuth2PasswordRequestForm = Depends(),
+    request: Request = None,
+    db: Session = Depends(get_db),
+):
     svc = AuthService(db)
     try:
         access, ttl, refresh, refresh_exp = svc.login(
@@ -46,6 +49,7 @@ def token(form: OAuth2PasswordRequestForm = Depends(),
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
     return {"access_token": access, "token_type": "bearer"}  # <== format minimal
+
 
 @router.post("/refresh", response_model=TokenPair)
 def refresh(data: RefreshRequest, request: Request, db: Session = Depends(get_db)):
@@ -66,20 +70,23 @@ def refresh(data: RefreshRequest, request: Request, db: Session = Depends(get_db
         "token_type": "bearer",
     }
 
+
 @router.post("/logout")
 def logout(data: LogoutRequest, db: Session = Depends(get_db)):
     svc = AuthService(db)
     svc.logout(refresh_token=data.refresh_token)
     return {"ok": True}
 
+
 @router.post("/logout_all")
-def logout_all(user = Depends(get_current_user), db: Session = Depends(get_db)):
+def logout_all(user=Depends(get_current_user), db: Session = Depends(get_db)):
     svc = AuthService(db)
     count = svc.logout_all(user_id=user.id)
     return {"revoked": count}
 
+
 @router.get("/me", response_model=UserPublic)
-def me(user = Depends(get_current_user)):
+def me(user=Depends(get_current_user)):
     return {
         "id": user.id,
         "username": user.username,

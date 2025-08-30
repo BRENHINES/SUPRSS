@@ -1,10 +1,10 @@
 # backend/app/schemas/user.py
-from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
-from pydantic import ConfigDict
 from datetime import datetime
+from typing import Optional
 
-from backend.app.models.user import UserTheme, FontSize
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
+from backend.app.models.user import FontSize, UserTheme
 
 
 class UserBase(BaseModel):
@@ -37,6 +37,7 @@ class UserCreate(BaseModel):
     avatar_url: Optional[str] = None
     bio: Optional[str] = None
 
+
 class UserUpdate(BaseModel):
     email: Optional[str] = None
     username: Optional[str] = None
@@ -51,11 +52,13 @@ class UserUpdate(BaseModel):
     articles_per_page: Optional[int] = None
     auto_mark_read: Optional[bool] = None
 
+
 class UserFlagsUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
     is_superuser: bool | None = None
     is_active: bool | None = None
     is_verified: bool | None = None
+
 
 class PasswordChangeRequest(BaseModel):
     old_password: str = Field(..., min_length=6)

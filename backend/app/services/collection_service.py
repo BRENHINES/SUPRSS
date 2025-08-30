@@ -1,11 +1,12 @@
 from typing import Optional, Tuple
-from fastapi import HTTPException, status
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
 
+from fastapi import HTTPException, status
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+
+from ..models.collection import Collection
 from ..repositories.collection import CollectionRepository
 from ..repositories.collection_member import CollectionMemberRepository
-from ..models.collection import Collection
 
 
 class CollectionService:
@@ -20,7 +21,9 @@ class CollectionService:
             return
         m = self.members.get_membership(collection_id=collection.id, user_id=user_id)
         if not m or not m.is_active or not m.is_admin:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed"
+            )
 
     # ---------- CRUD collections ----------
     def create(
@@ -75,7 +78,9 @@ class CollectionService:
     def update(self, *, collection_id: int, actor_id: int, **data) -> Collection:
         c = self.collections.get_by_id(collection_id)
         if not c:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Collection not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Collection not found"
+            )
 
         self._assert_owner_or_admin(collection=c, user_id=actor_id)
 
@@ -94,51 +99,69 @@ class CollectionService:
             return
         # on impose owner-only pour delete
         if c.owner_id != actor_id:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only owner can delete the collection")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only owner can delete the collection",
+            )
         self.db.delete(c)
         self.db.commit()
 
     # ---------- members ----------
-    def add_member(
-        self,
-        *,
-        collection_id: int,
-        actor_id: int,
-        user_id: int,
-        **perms
-    ):
+    def add_member(self, *, collection_id: int, actor_id: int, user_id: int, **perms):
         c = self.collections.get_by_id(collection_id)
         if not c:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Collection not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Collection not found"
+            )
         self._assert_owner_or_admin(collection=c, user_id=actor_id)
 
-        existing = self.members.get_membership(collection_id=collection_id, user_id=user_id)
+        existing = self.members.get_membership(
+            collection_id=collection_id, user_id=user_id
+        )
         if existing:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User already a member")
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail="User already a member"
+            )
 
         try:
-            m = self.members.add_member(collection_id=collection_id, user_id=user_id, invited_by=actor_id, **perms)
+            m = self.members.add_member(
+                collection_id=collection_id,
+                user_id=user_id,
+                invited_by=actor_id,
+                **perms
+            )
             c.total_members += 1
             self.db.commit()
             self.db.refresh(m)
             return m
         except IntegrityError:
             self.db.rollback()
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Membership conflict")
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail="Membership conflict"
+            )
 
-    def update_member(self, *, collection_id: int, member_id: int, actor_id: int, **perms):
+    def update_member(
+        self, *, collection_id: int, member_id: int, actor_id: int, **perms
+    ):
         c = self.collections.get_by_id(collection_id)
         if not c:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Collection not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Collection not found"
+            )
         self._assert_owner_or_admin(collection=c, user_id=actor_id)
 
         m = self.members.get_by_id(member_id)
         if not m or m.collection_id != collection_id:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Member not found"
+            )
 
         # on évite de rétrograder le owner
         if m.user_id == c.owner_id:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Owner cannot be edited as member")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Owner cannot be edited as member",
+            )
 
         for k, v in perms.items():
             if v is not None and hasattr(m, k):
@@ -149,7 +172,9 @@ class CollectionService:
         self.db.refresh(m)
         return m
 
-    def remove_member(self, *, collection_id: int, member_id: int, actor_id: int) -> None:
+    def remove_member(
+        self, *, collection_id: int, member_id: int, actor_id: int
+    ) -> None:
         c = self.collections.get_by_id(collection_id)
         if not c:
             return
@@ -159,7 +184,10 @@ class CollectionService:
         if not m or m.collection_id != collection_id:
             return
         if m.user_id == c.owner_id:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot remove the owner")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot remove the owner",
+            )
 
         self.members.remove_member(m)
         c.total_members = max(0, c.total_members - 1)

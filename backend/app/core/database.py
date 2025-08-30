@@ -1,7 +1,9 @@
-from .config import settings
-from sqlalchemy import create_engine, MetaData
-from sqlalchemy.orm import declarative_base, sessionmaker
 from contextlib import contextmanager
+
+from sqlalchemy import MetaData, create_engine
+from sqlalchemy.orm import declarative_base, sessionmaker
+
+from .config import settings
 
 """
 Connexion SQLAlchemy + session pour FastAPI
@@ -33,6 +35,7 @@ engine = create_engine(
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 Base = declarative_base(metadata=metadata)
+
 
 def get_db():
     """

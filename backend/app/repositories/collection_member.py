@@ -1,5 +1,6 @@
 from typing import Optional, Sequence, Tuple
-from sqlalchemy import select, func, and_
+
+from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session
 
 from ..models.collection import CollectionMember
@@ -13,16 +14,29 @@ class CollectionMemberRepository:
         stmt = select(CollectionMember).where(CollectionMember.id == member_id)
         return self.db.scalars(stmt).first()
 
-    def get_membership(self, *, collection_id: int, user_id: int) -> Optional[CollectionMember]:
+    def get_membership(
+        self, *, collection_id: int, user_id: int
+    ) -> Optional[CollectionMember]:
         stmt = select(CollectionMember).where(
-            and_(CollectionMember.collection_id == collection_id, CollectionMember.user_id == user_id)
+            and_(
+                CollectionMember.collection_id == collection_id,
+                CollectionMember.user_id == user_id,
+            )
         )
         return self.db.scalars(stmt).first()
 
-    def list_for_collection(self, *, collection_id: int, page: int, size: int) -> Tuple[Sequence[CollectionMember], int]:
-        stmt = select(CollectionMember).where(CollectionMember.collection_id == collection_id)
+    def list_for_collection(
+        self, *, collection_id: int, page: int, size: int
+    ) -> Tuple[Sequence[CollectionMember], int]:
+        stmt = select(CollectionMember).where(
+            CollectionMember.collection_id == collection_id
+        )
         total = self.db.scalar(select(func.count()).select_from(stmt.subquery()))
-        stmt = stmt.order_by(CollectionMember.joined_at.asc()).offset((page - 1) * size).limit(size)
+        stmt = (
+            stmt.order_by(CollectionMember.joined_at.asc())
+            .offset((page - 1) * size)
+            .limit(size)
+        )
         return self.db.scalars(stmt).all(), int(total or 0)
 
     def add_member(

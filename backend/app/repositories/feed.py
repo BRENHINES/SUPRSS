@@ -1,10 +1,11 @@
-from typing import Optional, Sequence, Tuple, Iterable
-from sqlalchemy import select, func, and_, or_
-from sqlalchemy.orm import Session, selectinload, joinedload
+from typing import Iterable, Optional, Sequence, Tuple
 
-from .base import SQLRepository
-from ..models.feed import Feed, FeedCategory, Category  # adapte si besoin
+from sqlalchemy import and_, func, or_, select
+from sqlalchemy.orm import Session, joinedload, selectinload
+
 from ..models.feed import FeedStatus  # ton Enum python
+from ..models.feed import Category, Feed, FeedCategory  # adapte si besoin
+from .base import SQLRepository
 
 
 class FeedRepository(SQLRepository[Feed]):
@@ -18,7 +19,9 @@ class FeedRepository(SQLRepository[Feed]):
         )
         return self.session.scalars(stmt).first()
 
-    def get_by_url_in_collection(self, *, collection_id: int, url: str) -> Optional[Feed]:
+    def get_by_url_in_collection(
+        self, *, collection_id: int, url: str
+    ) -> Optional[Feed]:
         stmt = select(Feed).where(
             and_(Feed.collection_id == collection_id, Feed.url == url)
         )
@@ -53,7 +56,9 @@ class FeedRepository(SQLRepository[Feed]):
             stmt = stmt.where(or_(Feed.title.ilike(like), Feed.url.ilike(like)))
 
         total = self.session.scalar(select(func.count()).select_from(stmt.subquery()))
-        stmt = stmt.order_by(Feed.created_at.desc()).offset((page - 1) * size).limit(size)
+        stmt = (
+            stmt.order_by(Feed.created_at.desc()).offset((page - 1) * size).limit(size)
+        )
         items = self.session.scalars(stmt).all()
         return items, int(total or 0)
 
@@ -72,7 +77,9 @@ class FeedRepository(SQLRepository[Feed]):
 
     def detach_category(self, *, feed_id: int, category_id: int) -> int:
         stmt = select(FeedCategory).where(
-            and_(FeedCategory.feed_id == feed_id, FeedCategory.category_id == category_id)
+            and_(
+                FeedCategory.feed_id == feed_id, FeedCategory.category_id == category_id
+            )
         )
         fc = self.session.scalars(stmt).first()
         if fc:

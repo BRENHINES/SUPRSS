@@ -1,0 +1,9 @@
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+extend-exclude = "migrations/"
+
+[tool.isort]
+profile = "black"
+src_paths = ["app", "migrations"]
+skip = ["__pycache__"]

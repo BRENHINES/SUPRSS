@@ -1,11 +1,11 @@
-from typing import Optional, Sequence, Tuple
-from sqlalchemy import select, func, and_, delete, insert
-from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional, Sequence, Tuple
 
-from .base import SQLRepository
+from sqlalchemy import and_, delete, func, insert, select
+from sqlalchemy.orm import Session
+
 from ..models.feed import Category  # adapte si Category est ailleurs
-from ..models.feed import FeedCategory, Feed
+from ..models.feed import Feed, FeedCategory
+from .base import SQLRepository
 
 
 class CategoryRepository(SQLRepository[Category]):
@@ -14,7 +14,9 @@ class CategoryRepository(SQLRepository[Category]):
     def ids_by_names(self, names: List[str]) -> List[int]:
         if not names:
             return []
-        stmt = select(Category.id).where(Category.name.in_([n.strip() for n in names if n.strip()]))
+        stmt = select(Category.id).where(
+            Category.name.in_([n.strip() for n in names if n.strip()])
+        )
         return [row[0] for row in self.session.execute(stmt).all()]
 
     def get_by_id(self, category_id: int) -> Optional[Category]:
@@ -25,7 +27,9 @@ class CategoryRepository(SQLRepository[Category]):
         stmt = select(Category).where(Category.name == name)
         return self.session.scalars(stmt).first()
 
-    def list_paginated(self, *, search: Optional[str], page: int, size: int) -> Tuple[Sequence[Category], int]:
+    def list_paginated(
+        self, *, search: Optional[str], page: int, size: int
+    ) -> Tuple[Sequence[Category], int]:
         stmt = select(Category)
         if search:
             like = f"%{search.strip()}%"
@@ -47,21 +51,23 @@ class CategoryRepository(SQLRepository[Category]):
         fc = FeedCategory
 
         base = (
-            select(
-                cat,
-                func.count(fc.id).label("feeds_count")
-            )
+            select(cat, func.count(fc.id).label("feeds_count"))
             .select_from(cat)
             .join(fc, fc.category_id == cat.id, isouter=True)
         )
         if search:
             base = base.where(cat.name.ilike(f"%{search}%"))
 
-        total = self.session.scalar(
-            select(func.count()).select_from(
-                select(cat.id).where(cat.name.ilike(f"%{search}%")) if search else select(cat.id)
+        total = (
+            self.session.scalar(
+                select(func.count()).select_from(
+                    select(cat.id).where(cat.name.ilike(f"%{search}%"))
+                    if search
+                    else select(cat.id)
+                )
             )
-        ) or 0
+            or 0
+        )
 
         rows = self.session.execute(
             base.group_by(cat.id)
@@ -82,7 +88,9 @@ class CategoryRepository(SQLRepository[Category]):
 
         # évite le doublon
         exists_stmt = select(FeedCategory.id).where(
-            and_(FeedCategory.category_id == category_id, FeedCategory.feed_id == feed_id)
+            and_(
+                FeedCategory.category_id == category_id, FeedCategory.feed_id == feed_id
+            )
         )
         if self.session.scalar(exists_stmt):
             return  # idempotent
@@ -93,7 +101,12 @@ class CategoryRepository(SQLRepository[Category]):
     def detach_feed(self, *, category_id: int, feed_id: int) -> int:
         q = (
             delete(FeedCategory)
-            .where(and_(FeedCategory.category_id == category_id, FeedCategory.feed_id == feed_id))
+            .where(
+                and_(
+                    FeedCategory.category_id == category_id,
+                    FeedCategory.feed_id == feed_id,
+                )
+            )
             .execution_options(synchronize_session="fetch")
         )
         res = self.session.execute(q)

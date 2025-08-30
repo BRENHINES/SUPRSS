@@ -1,17 +1,18 @@
 from functools import lru_cache
+from pathlib import Path
 from typing import List, Union
+
 from pydantic import AnyHttpUrl, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pathlib import Path
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file= ".env",
+        env_file=".env",
         env_file_encoding="utf-8",
         env_ignore_empty=True,
         extra="ignore",
-        case_sensitive=False
+        case_sensitive=False,
     )
 
     # ------------------------------------------------------------------ #
@@ -28,7 +29,9 @@ class Settings(BaseSettings):
     jwt_secret_key: str = Field(..., env="JWT_SECRET_KEY")
     refresh_secret_key: str = Field(..., env="REFRESH_SECRET_KEY")
     jwt_algorithm: str = Field(default="HS256", env="JWT_ALGORITHM")
-    access_token_expire_minutes: int = Field(default=30, env="ACCESS_TOKEN_EXPIRE_MINUTES")
+    access_token_expire_minutes: int = Field(
+        default=30, env="ACCESS_TOKEN_EXPIRE_MINUTES"
+    )
     refresh_token_expire_days: int = Field(default=7, env="REFRESH_TOKEN_EXPIRE_DAYS")
 
     # ------------------------------------------------------------------ #
@@ -51,19 +54,31 @@ class Settings(BaseSettings):
     azure_storage_account: str = Field(..., env="AZURE_STORAGE_ACCOUNT")
     azure_storage_key: str = Field(..., env="AZURE_STORAGE_KEY")
     azure_blob_endpoint: str = Field(..., env="AZURE_BLOB_ENDPOINT")
-    azure_avatars_container: str = Field(default="avatars", env="AZURE_AVATARS_CONTAINER")
-    azure_avatar_sas_expire_min: int = Field(default=10, env="AZURE_AVATAR_SAS_EXPIRE_MIN")
+    azure_avatars_container: str = Field(
+        default="avatars", env="AZURE_AVATARS_CONTAINER"
+    )
+    azure_avatar_sas_expire_min: int = Field(
+        default=10, env="AZURE_AVATAR_SAS_EXPIRE_MIN"
+    )
     azure_avatar_max_mb: int = Field(default=2, env="AZURE_AVATAR_MAX_MB")
-    azure_avatar_allowed_types: list[str] = Field(default_factory=list, env="AZURE_AVATAR_ALLOWED_TYPES")
+    azure_avatar_allowed_types: list[str] = Field(
+        default_factory=list, env="AZURE_AVATAR_ALLOWED_TYPES"
+    )
 
     # ------------------------------------------------------------------ #
     # RSS
     # ------------------------------------------------------------------ #
     rss_fetch_timeout: int = Field(default=30, env="RSS_FETCH_TIMEOUT")
     rss_user_agent: str = Field(default="SUPRSS/1.0", env="RSS_USER_AGENT")
-    rss_max_articles_per_feed: int = Field(default=1000, env="RSS_MAX_ARTICLES_PER_FEED")
-    rss_default_update_interval: int = Field(default=60, env="RSS_DEFAULT_UPDATE_INTERVAL")
-    rss_max_concurrent_fetches: int = Field(default=10, env="RSS_MAX_CONCURRENT_FETCHES")
+    rss_max_articles_per_feed: int = Field(
+        default=1000, env="RSS_MAX_ARTICLES_PER_FEED"
+    )
+    rss_default_update_interval: int = Field(
+        default=60, env="RSS_DEFAULT_UPDATE_INTERVAL"
+    )
+    rss_max_concurrent_fetches: int = Field(
+        default=10, env="RSS_MAX_CONCURRENT_FETCHES"
+    )
 
     @classmethod
     def _split_or_list(cls, v: Union[str, List[str]]) -> List[str]:
@@ -104,9 +119,11 @@ class Settings(BaseSettings):
         # URL publique du conteneur d’avatars sans SAS
         return f"{self.azure_blob_endpoint}/{self.azure_avatars_container}"
 
+
 @lru_cache
 def get_settings() -> Settings:
     """Instance unique mise en cache."""
     return Settings()
+
 
 settings = get_settings()

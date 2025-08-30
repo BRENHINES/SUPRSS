@@ -13,6 +13,7 @@ class UnitOfWork(AbstractContextManager):
     Ouvre une session/transaction, expose les repositories,
     commit si succès, rollback sinon, ferme la session.
     """
+
     def __init__(self, session_factory: Callable[[], Session] = SessionLocal):
         self._session_factory = session_factory
         self.session: Session | None = None
@@ -36,6 +37,7 @@ class UnitOfWork(AbstractContextManager):
             self.session.close()
         # Ne supprime pas l'exception : laisse FastAPI la gérer si besoin
         return False
+
 
 def get_uow() -> Generator[UnitOfWork, None, None]:
     # Utilisation en contexte, mais FastAPI gère le yield proprement

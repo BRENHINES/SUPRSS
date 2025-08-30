@@ -1,12 +1,13 @@
-from typing import Optional, Sequence, Tuple
 from datetime import datetime
-from sqlalchemy import select, func, and_, or_
+from typing import Optional, Sequence, Tuple
+
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
 
-from .base import SQLRepository
-from ..models.article import Article
+from ..models.article import Article, UserArticle
 from ..models.feed import Feed
-from ..models.article import UserArticle
+from .base import SQLRepository
+
 
 class ArticleRepository(SQLRepository[Article]):
     model = Article
@@ -27,12 +28,25 @@ class ArticleRepository(SQLRepository[Article]):
         stmt = select(Article).where(Article.feed_id == feed_id)
         if q:
             like = f"%{q.strip()}%"
-            stmt = stmt.where(or_(Article.title.ilike(like), Article.summary.ilike(like), Article.author.ilike(like)))
+            stmt = stmt.where(
+                or_(
+                    Article.title.ilike(like),
+                    Article.summary.ilike(like),
+                    Article.author.ilike(like),
+                )
+            )
         if from_date:
             stmt = stmt.where(Article.published_at >= from_date)
         total = self.session.scalar(select(func.count()).select_from(stmt.subquery()))
-        stmt = stmt.order_by(Article.published_at.desc() if order_desc else Article.published_at.asc()) \
-                   .offset((page - 1) * size).limit(size)
+        stmt = (
+            stmt.order_by(
+                Article.published_at.desc()
+                if order_desc
+                else Article.published_at.asc()
+            )
+            .offset((page - 1) * size)
+            .limit(size)
+        )
         return self.session.scalars(stmt).all(), int(total or 0)
 
     def list_for_user_by_collection(
@@ -49,15 +63,26 @@ class ArticleRepository(SQLRepository[Article]):
         a = Article
         ua = UserArticle
         f = Feed
-        stmt = select(a).join(f, a.feed_id == f.id).where(f.collection_id == collection_id)
+        stmt = (
+            select(a).join(f, a.feed_id == f.id).where(f.collection_id == collection_id)
+        )
         if only_unread:
             # sans ligne UA is_read=True ; soit pas de UA, soit UA.is_read=False
-            stmt = stmt.outerjoin(ua, and_(ua.article_id == a.id, ua.user_id == user_id)).where(
+            stmt = stmt.outerjoin(
+                ua, and_(ua.article_id == a.id, ua.user_id == user_id)
+            ).where(
                 or_(ua.id.is_(None), ua.is_read == False)  # noqa: E712
             )
         if only_favorites:
-            stmt = stmt.join(ua, and_(ua.article_id == a.id, ua.user_id == user_id, ua.is_favorite == True))  # noqa: E712
+            stmt = stmt.join(
+                ua,
+                and_(
+                    ua.article_id == a.id, ua.user_id == user_id, ua.is_favorite == True
+                ),
+            )  # noqa: E712
 
         total = self.session.scalar(select(func.count()).select_from(stmt.subquery()))
-        stmt = stmt.order_by(a.published_at.desc()).offset((page - 1) * size).limit(size)
+        stmt = (
+            stmt.order_by(a.published_at.desc()).offset((page - 1) * size).limit(size)
+        )
         return self.session.scalars(stmt).all(), int(total or 0)

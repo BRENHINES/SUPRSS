@@ -1,8 +1,10 @@
 from typing import Optional, Sequence
-from sqlalchemy import select, desc
+
+from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
-from ..models.import_job import ImportJob, ImportStatus, FileFormat
+from ..models.import_job import FileFormat, ImportJob, ImportStatus
+
 
 class ImportJobRepository:
     def __init__(self, db: Session):
@@ -12,11 +14,24 @@ class ImportJobRepository:
         return self.db.get(ImportJob, job_id)
 
     def list_for_user(self, user_id: int, limit: int = 50) -> Sequence[ImportJob]:
-        stmt = select(ImportJob).where(ImportJob.user_id == user_id).order_by(desc(ImportJob.created_at)).limit(limit)
+        stmt = (
+            select(ImportJob)
+            .where(ImportJob.user_id == user_id)
+            .order_by(desc(ImportJob.created_at))
+            .limit(limit)
+        )
         return self.db.execute(stmt).scalars().all()
 
-    def create(self, *, user_id: int, filename: str, file_format: FileFormat, file_size: Optional[int],
-               target_collection_id: Optional[int], override_existing: bool) -> ImportJob:
+    def create(
+        self,
+        *,
+        user_id: int,
+        filename: str,
+        file_format: FileFormat,
+        file_size: Optional[int],
+        target_collection_id: Optional[int],
+        override_existing: bool
+    ) -> ImportJob:
         job = ImportJob(
             user_id=user_id,
             filename=filename,
@@ -35,7 +50,9 @@ class ImportJobRepository:
         job.status = ImportStatus.PROCESSING
         self.db.add(job)
 
-    def set_progress(self, job: ImportJob, *, imported: int, failed: int, skipped: int, total: int):
+    def set_progress(
+        self, job: ImportJob, *, imported: int, failed: int, skipped: int, total: int
+    ):
         job.imported_feeds = imported
         job.failed_feeds = failed
         job.skipped_feeds = skipped
@@ -49,7 +66,9 @@ class ImportJobRepository:
         job.success_message = message
         self.db.add(job)
 
-    def set_failed(self, job: ImportJob, *, error_message: str, error_log: str | None = None):
+    def set_failed(
+        self, job: ImportJob, *, error_message: str, error_log: str | None = None
+    ):
         job.status = ImportStatus.FAILED
         job.error_message = error_message
         job.error_log = error_log

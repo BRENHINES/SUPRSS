@@ -1,16 +1,18 @@
-from enum import Enum
-
-from pydantic import BaseModel, Field, AnyUrl, field_validator
-from typing import Optional, List, Union
-from pydantic.networks import HttpUrl
 from datetime import datetime
+from enum import Enum
+from typing import List, Optional, Union
+
+from pydantic import AnyUrl, BaseModel, Field, field_validator
+from pydantic.networks import HttpUrl
 
 from .category import CategoryOut
+
 
 class Frequency(str, Enum):
     hourly = "hourly"
     daily = "daily"
     weekly = "weekly"
+
 
 class FeedCreate(BaseModel):
     title: str = Field(..., min_length=1, max_length=200)
@@ -19,7 +21,6 @@ class FeedCreate(BaseModel):
     update_frequency: Optional[Union[int, Frequency]] = Field(default=60)
     priority: Optional[int] = Field(None, description="1..10, default 5")
     category_names: List[str] = Field(default_factory=list)
-
 
     @field_validator("url", mode="before")
     @classmethod
@@ -34,10 +35,15 @@ class FeedCreate(BaseModel):
         if isinstance(v, int):
             return v
         # enum → minutes
-        mapping = {Frequency.hourly: 60, Frequency.daily: 60 * 24, Frequency.weekly: 60 * 24 * 7}
+        mapping = {
+            Frequency.hourly: 60,
+            Frequency.daily: 60 * 24,
+            Frequency.weekly: 60 * 24 * 7,
+        }
         return mapping.get(v, 60)
 
     model_config = {"from_attributes": True}
+
 
 class FeedUpdate(BaseModel):
     title: Optional[str] = None
@@ -48,6 +54,7 @@ class FeedUpdate(BaseModel):
     status: Optional[str] = Field(None, description="active/inactive/error/deleted")
 
     model_config = {"from_attributes": True}
+
 
 class FeedOut(BaseModel):
     id: int
@@ -72,6 +79,7 @@ class FeedOut(BaseModel):
         return [getattr(item, "category", item) for item in v]
 
     model_config = {"from_attributes": True}
+
 
 class FeedAttachCategories(BaseModel):
     category_ids: List[int] = Field(..., min_items=1)

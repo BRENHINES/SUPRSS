@@ -1,5 +1,7 @@
-from pydantic import BaseModel, Field
 from typing import Optional
+
+from pydantic import BaseModel, Field
+
 
 class CategoryCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=50)
@@ -9,6 +11,7 @@ class CategoryCreate(BaseModel):
 
     model_config = {"from_attributes": True}
 
+
 class CategoryUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=50)
     color: Optional[str] = None
@@ -16,6 +19,7 @@ class CategoryUpdate(BaseModel):
     description: Optional[str] = None
 
     model_config = {"from_attributes": True}
+
 
 class CategoryOut(BaseModel):
     id: int
@@ -25,6 +29,7 @@ class CategoryOut(BaseModel):
     description: Optional[str]
 
     model_config = {"from_attributes": True}
+
 
 class CategoryWithCountOut(CategoryOut):
     feeds_count: int = 0

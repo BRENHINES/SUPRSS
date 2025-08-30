@@ -1,7 +1,9 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Enum, Boolean
+import enum
+
+from sqlalchemy import (Boolean, Column, DateTime, Enum, ForeignKey, Integer,
+                        String, Text)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-import enum
 
 from ..core.database import Base
 
@@ -51,7 +53,9 @@ class ImportJob(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     started_at = Column(DateTime(timezone=True), nullable=True)
     completed_at = Column(DateTime(timezone=True), nullable=True)
 

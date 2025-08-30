@@ -1,13 +1,17 @@
 import os
-import uuid
-from urllib.parse import urlparse
 import pathlib
+import re
+import uuid
+from datetime import datetime, timedelta, timezone
 from typing import BinaryIO
-from azure.storage.blob import BlobServiceClient, ContentSettings, PublicAccess, generate_blob_sas, BlobSasPermissions
+from urllib.parse import urlparse
+
+from azure.storage.blob import (BlobSasPermissions, BlobServiceClient,
+                                ContentSettings, PublicAccess,
+                                generate_blob_sas)
+
 from ..core.config import settings
 
-import re
-from datetime import datetime, timedelta, timezone
 
 class AzureBlobStorage:
     def __init__(self):
@@ -28,7 +32,9 @@ class AzureBlobStorage:
         except Exception:
             pass  # existe déjà
 
-    def upload_user_avatar(self, *, user_id: int, filename: str, content_type: str, data: BinaryIO) -> str:
+    def upload_user_avatar(
+        self, *, user_id: int, filename: str, content_type: str, data: BinaryIO
+    ) -> str:
         # Extension propre
         ext = pathlib.Path(filename).suffix.lower() or ".png"
         blob_name = f"users/{user_id}/avatar_{uuid.uuid4().hex}{ext}"
@@ -68,20 +74,26 @@ def _service_client() -> BlobServiceClient:
         credential=settings.azure_storage_key,
     )
 
+
 def make_avatar_blob_name(user_id: int, filename: str) -> str:
     # Conserve l’extension si valide
     m = re.search(r"\.([A-Za-z0-9]{1,10})$", filename or "")
     ext = f".{m.group(1).lower()}" if m else ".png"
     return f"{user_id}/{uuid.uuid4().hex}{ext}"
 
+
 def generate_avatar_upload_sas(user_id: int, filename: str, content_type: str):
     # contrôle rapide du content-type
-    allowed = set([t.strip() for t in (settings.azure_avatar_allowed_types or []) if t.strip()])
+    allowed = set(
+        [t.strip() for t in (settings.azure_avatar_allowed_types or []) if t.strip()]
+    )
     if allowed and content_type not in allowed:
         raise ValueError("Unsupported content-type")
 
     blob_name = make_avatar_blob_name(user_id, filename)
-    expires = datetime.now(timezone.utc) + timedelta(minutes=settings.azure_avatar_sas_expire_min)
+    expires = datetime.now(timezone.utc) + timedelta(
+        minutes=settings.azure_avatar_sas_expire_min
+    )
 
     sas = generate_blob_sas(
         account_name=settings.azure_storage_account,
@@ -104,8 +116,9 @@ def generate_avatar_upload_sas(user_id: int, filename: str, content_type: str):
         "required_headers": {
             "x-ms-blob-type": "BlockBlob",
             "Content-Type": content_type,
-        }
+        },
     }
+
 
 def delete_avatar_blob_by_url(url: str) -> bool:
     """
@@ -124,7 +137,7 @@ def delete_avatar_blob_by_url(url: str) -> bool:
     if not path.startswith(prefix):
         return False
 
-    blob_name = path[len(prefix):]
+    blob_name = path[len(prefix) :]
 
     client = _service_client()
     container = client.get_container_client(settings.azure_avatars_container)

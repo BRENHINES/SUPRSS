@@ -1,15 +1,26 @@
-from typing import Optional, Sequence, Tuple, Iterable
 from datetime import datetime
-from sqlalchemy import select, func, desc, asc
+from typing import Iterable, Optional, Sequence, Tuple
+
+from sqlalchemy import asc, desc, func, select
 from sqlalchemy.orm import Session
 
-from ..models.message import ChatMessage, MessageType, ChatReaction
+from ..models.message import ChatMessage, ChatReaction, MessageType
+
 
 class ChatRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def create(self, *, collection_id: int, author_id: int, content: str, message_type: MessageType = MessageType.TEXT, reply_to_id: Optional[int] = None, metadata_json: Optional[str] = None) -> ChatMessage:
+    def create(
+        self,
+        *,
+        collection_id: int,
+        author_id: int,
+        content: str,
+        message_type: MessageType = MessageType.TEXT,
+        reply_to_id: Optional[int] = None,
+        metadata_json: Optional[str] = None,
+    ) -> ChatMessage:
         m = ChatMessage(
             collection_id=collection_id,
             author_id=author_id,
@@ -25,20 +36,28 @@ class ChatRepository:
     def get_by_id(self, mid: int) -> Optional[ChatMessage]:
         return self.db.get(ChatMessage, mid)
 
-    def list_for_collection(self, *, collection_id: int, page: int, size: int) -> Tuple[Sequence[ChatMessage], int]:
-        stmt = select(ChatMessage).where(ChatMessage.collection_id == collection_id, ChatMessage.is_deleted == False)  # noqa: E712
+    def list_for_collection(
+        self, *, collection_id: int, page: int, size: int
+    ) -> Tuple[Sequence[ChatMessage], int]:
+        stmt = select(ChatMessage).where(
+            ChatMessage.collection_id == collection_id, ChatMessage.is_deleted == False
+        )  # noqa: E712
         total = self.db.scalar(select(func.count()).select_from(stmt.subquery()))
-        stmt = stmt.order_by(ChatMessage.created_at.desc()).offset((page - 1) * size).limit(size)
+        stmt = (
+            stmt.order_by(ChatMessage.created_at.desc())
+            .offset((page - 1) * size)
+            .limit(size)
+        )
         return self.db.scalars(stmt).all(), int(total or 0)
 
     def list_in_collection(
-            self,
-            collection_id: int,
-            *,
-            limit: int = 50,
-            before: Optional[datetime] = None,
-            after: Optional[datetime] = None,
-            top_level_only: bool = True,
+        self,
+        collection_id: int,
+        *,
+        limit: int = 50,
+        before: Optional[datetime] = None,
+        after: Optional[datetime] = None,
+        top_level_only: bool = True,
     ) -> Sequence[ChatMessage]:
         stmt = select(ChatMessage).where(ChatMessage.collection_id == collection_id)
         if top_level_only:
@@ -50,10 +69,17 @@ class ChatRepository:
         stmt = stmt.order_by(desc(ChatMessage.created_at)).limit(limit)
         return self.db.execute(stmt).scalars().all()
 
-    def list_thread(self, collection_id: int, root_id: int, *, limit: int = 100, after: Optional[datetime] = None) -> Sequence[ChatMessage]:
+    def list_thread(
+        self,
+        collection_id: int,
+        root_id: int,
+        *,
+        limit: int = 100,
+        after: Optional[datetime] = None,
+    ) -> Sequence[ChatMessage]:
         stmt = select(ChatMessage).where(
             ChatMessage.collection_id == collection_id,
-            ChatMessage.reply_to_id == root_id
+            ChatMessage.reply_to_id == root_id,
         )
         if after:
             stmt = stmt.where(ChatMessage.created_at > after)
@@ -78,11 +104,15 @@ class ChatRepository:
         self.db.add(m)
 
     # ---- reactions helpers ----
-    def reaction_counts_for(self, message_ids: Iterable[int]) -> dict[int, dict[str, int]]:
+    def reaction_counts_for(
+        self, message_ids: Iterable[int]
+    ) -> dict[int, dict[str, int]]:
         if not message_ids:
             return {}
         stmt = (
-            select(ChatReaction.message_id, ChatReaction.emoji, func.count(ChatReaction.id))
+            select(
+                ChatReaction.message_id, ChatReaction.emoji, func.count(ChatReaction.id)
+            )
             .where(ChatReaction.message_id.in_(list(message_ids)))
             .group_by(ChatReaction.message_id, ChatReaction.emoji)
         )
@@ -102,7 +132,7 @@ class ChatReactionRepository:
         stmt = select(ChatReaction).where(
             ChatReaction.message_id == message_id,
             ChatReaction.user_id == user_id,
-            ChatReaction.emoji == emoji
+            ChatReaction.emoji == emoji,
         )
         r = self.db.execute(stmt).scalars().first()
         if r:

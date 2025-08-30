@@ -1,20 +1,23 @@
 from __future__ import annotations
-from typing import Optional, List, Dict, Callable
-from fastapi import HTTPException, status
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
 
-from ..models.import_job import ImportJob, ImportStatus, FileFormat
-from ..repositories.import_job import ImportJobRepository
+from typing import Callable, Dict, List, Optional
+
+from fastapi import HTTPException, status
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+
+from ..models.import_job import FileFormat, ImportJob, ImportStatus
 from ..repositories.feed import FeedRepository
+from ..repositories.import_job import ImportJobRepository
 from ..services.feed_service import FeedService  # tu l'as déjà
-from .import_utils import parse_opml_feeds, parse_json_feeds, parse_csv_feeds
+from .import_utils import parse_csv_feeds, parse_json_feeds, parse_opml_feeds
 
 PARSERS: dict[FileFormat, Callable[[bytes], List[Dict[str, str]]]] = {
     FileFormat.OPML: parse_opml_feeds,
     FileFormat.JSON: parse_json_feeds,
-    FileFormat.CSV:  parse_csv_feeds,
+    FileFormat.CSV: parse_csv_feeds,
 }
+
 
 class ImportService:
     def __init__(self, db: Session):
@@ -23,9 +26,16 @@ class ImportService:
         self.feeds = FeedRepository(db)
         self.feed_service = FeedService(db)
 
-    def create_job(self, *, user_id: int, filename: str, file_format: FileFormat,
-                   file_size: Optional[int], target_collection_id: Optional[int],
-                   override_existing: bool) -> ImportJob:
+    def create_job(
+        self,
+        *,
+        user_id: int,
+        filename: str,
+        file_format: FileFormat,
+        file_size: Optional[int],
+        target_collection_id: Optional[int],
+        override_existing: bool,
+    ) -> ImportJob:
         if not target_collection_id:
             raise HTTPException(status_code=400, detail="target_collection_id required")
         job = self.jobs.create(
@@ -82,10 +92,14 @@ class ImportService:
                     self.db.rollback()
                     failed += 1
 
-                self.jobs.set_progress(job, imported=imported, failed=failed, skipped=skipped, total=total)
+                self.jobs.set_progress(
+                    job, imported=imported, failed=failed, skipped=skipped, total=total
+                )
                 self.db.commit()
 
-            self.jobs.set_success(job, message=f"Imported={imported}, skipped={skipped}, failed={failed}")
+            self.jobs.set_success(
+                job, message=f"Imported={imported}, skipped={skipped}, failed={failed}"
+            )
             self.db.commit()
         except Exception as e:
             self.db.rollback()

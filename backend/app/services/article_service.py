@@ -1,15 +1,15 @@
-from typing import Optional, Tuple, Sequence
-from fastapi import HTTPException, status
-from sqlalchemy.orm import Session
-from sqlalchemy import select
-from sqlalchemy import update
+from typing import Optional, Sequence, Tuple
 
-from ..repositories.article import ArticleRepository
-from ..repositories.user_article import UserArticleRepository
-from ..repositories.collection_member import CollectionMemberRepository
-from ..models.article import Article
+from fastapi import HTTPException, status
+from sqlalchemy import select, update
+from sqlalchemy.orm import Session
+
+from ..models.article import Article, UserArticle
 from ..models.feed import Feed
-from ..models.article import UserArticle
+from ..repositories.article import ArticleRepository
+from ..repositories.collection_member import CollectionMemberRepository
+from ..repositories.user_article import UserArticleRepository
+
 
 class ArticleService:
     def __init__(self, db: Session):
@@ -23,10 +23,19 @@ class ArticleService:
         # via feed -> collection
         feed: Feed = self.db.get(Feed, article.feed_id)
         if not feed:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Feed not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Feed not found"
+            )
         if feed.collection_id is None:
-            raise HTTPException(status_code=400, detail="Invalid article feed/collection")
-        if self.members.get_membership(collection_id=feed.collection_id, user_id=user_id) or feed.collection.owner_id == user_id:
+            raise HTTPException(
+                status_code=400, detail="Invalid article feed/collection"
+            )
+        if (
+            self.members.get_membership(
+                collection_id=feed.collection_id, user_id=user_id
+            )
+            or feed.collection.owner_id == user_id
+        ):
             return feed.collection_id
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed")
 
@@ -34,14 +43,20 @@ class ArticleService:
     def get_article(self, *, article_id: int, user_id: Optional[int] = None) -> Article:
         a = self.articles.get_by_id(article_id)
         if not a:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Article not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Article not found"
+            )
         # si user_id fourni, vérifier appartenance
         if user_id is not None:
             self._assert_member_for_article(article=a, user_id=user_id)
         return a
 
-    def list_feed_articles(self, *, feed_id: int, q: Optional[str], from_date, page: int, size: int):
-        return self.articles.list_by_feed(feed_id=feed_id, q=q, from_date=from_date, page=page, size=size)
+    def list_feed_articles(
+        self, *, feed_id: int, q: Optional[str], from_date, page: int, size: int
+    ):
+        return self.articles.list_by_feed(
+            feed_id=feed_id, q=q, from_date=from_date, page=page, size=size
+        )
 
     # ---- interactions ----
     def patch_interaction(
@@ -77,18 +92,28 @@ class ArticleService:
         self.ua_repo.save(ua)
 
         # calcul des deltas
-        read_delta = (1 if (not prev_read and ua.is_read) else (-1 if (prev_read and not ua.is_read) else 0))
-        fav_delta = (1 if (not prev_fav and ua.is_favorite) else (-1 if (prev_fav and not ua.is_favorite) else 0))
+        read_delta = (
+            1
+            if (not prev_read and ua.is_read)
+            else (-1 if (prev_read and not ua.is_read) else 0)
+        )
+        fav_delta = (
+            1
+            if (not prev_fav and ua.is_favorite)
+            else (-1 if (prev_fav and not ua.is_favorite) else 0)
+        )
 
         # updates atomiques côté DB
         if read_delta:
             self.db.execute(
-                update(Article).where(Article.id == a.id)
+                update(Article)
+                .where(Article.id == a.id)
                 .values(total_reads=Article.total_reads + read_delta)
             )
         if fav_delta:
             self.db.execute(
-                update(Article).where(Article.id == a.id)
+                update(Article)
+                .where(Article.id == a.id)
                 .values(total_favorites=Article.total_favorites + fav_delta)
             )
 
@@ -107,13 +132,20 @@ class ArticleService:
         size: int,
     ):
         # vérif membership
-        if not (self.members.get_membership(collection_id=collection_id, user_id=user_id)):
+        if not (
+            self.members.get_membership(collection_id=collection_id, user_id=user_id)
+        ):
             # autoriser si owner
             from ..repositories.collection import CollectionRepository
+
             c = CollectionRepository(self.db).get_by_id(collection_id)
             if not c or (c.owner_id != user_id and not c.is_public):
                 raise HTTPException(status_code=403, detail="Not allowed")
         return self.articles.list_for_user_by_collection(
-            user_id=user_id, collection_id=collection_id, only_unread=only_unread, only_favorites=only_favorites,
-            page=page, size=size
+            user_id=user_id,
+            collection_id=collection_id,
+            only_unread=only_unread,
+            only_favorites=only_favorites,
+            page=page,
+            size=size,
         )

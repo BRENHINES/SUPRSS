@@ -1,39 +1,45 @@
+import logging
 from datetime import datetime
 
-from fastapi import FastAPI, Depends, Request
-from sqlalchemy.orm import Session
-from sqlalchemy import text
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-import logging
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
-from .core.database import get_db
+
+from ..app.routes import article as articles_routes
+from ..app.routes import auth as auth_routes
+from ..app.routes import category as categories_routes
+from ..app.routes import chat as chat_routes
+from ..app.routes import collection as collections_routes
+from ..app.routes import comment as comments_routes
+from ..app.routes import feed as feeds_routes
+from ..app.routes import fetch as fetch_routes
+from ..app.routes import imports as imports_routes
+from ..app.routes import user as user_routes
 # from ..app.api.users import router as users_router
 from .core.config import settings
+from .core.database import get_db
 from .core.errors import install_exception_handlers
-from .core.logging import configure_logging
-
 from .core.exception_handlers import register_exception_handlers
+from .core.logging import configure_logging
 from .schemas.common import HealthResponse, ReadyResponse
 
-from ..app.routes import auth as auth_routes
-from ..app.routes import user as user_routes
-from ..app.routes import category as categories_routes
-from ..app.routes import feed as feeds_routes
-from ..app.routes import collection as collections_routes
-from ..app.routes import article as articles_routes
-from ..app.routes import comment as comments_routes
-from ..app.routes import chat as chat_routes
-from ..app.routes import imports as imports_routes
-from ..app.routes import fetch as fetch_routes
-
-app = FastAPI(title=settings.APP_NAME, version=settings.VERSION, docs_url="/docs", redoc_url="/redoc")
+app = FastAPI(
+    title=settings.APP_NAME,
+    version=settings.VERSION,
+    docs_url="/docs",
+    redoc_url="/redoc",
+)
 app_logger = logging.getLogger("app.requests")
 
 # --- CORS ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=(settings.CORS_ORIGINS or ["*"]) if settings.DEBUG else settings.CORS_ORIGINS,
+    allow_origins=(
+        (settings.CORS_ORIGINS or ["*"]) if settings.DEBUG else settings.CORS_ORIGINS
+    ),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -42,10 +48,13 @@ app.add_middleware(
 # --- Exception handlers ---
 register_exception_handlers(app)
 
+
 # --- Logging middleware (simple & utile) ---
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
-    import time, logging
+    import logging
+    import time
+
     start = time.perf_counter()
     response = await call_next(request)
     duration_ms = (time.perf_counter() - start) * 1000
@@ -58,20 +67,35 @@ async def log_requests(request: Request, call_next):
     )
     return response
 
+
 # --- Probes ---
 @app.get("/health", response_model=HealthResponse, response_model_by_alias=True)
 def health_check(db: Session = Depends(get_db)):
     db.execute(text("SELECT 1"))
     return {"Health Status": "Database is healthy", "timestamp": datetime.now()}
 
+
 @app.get("/ready", response_model=ReadyResponse, response_model_by_alias=True)
 def readiness(db: Session = Depends(get_db)):
     try:
-        version = db.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
-        return {"Migration Status": "Database ready", "Migrations in sync": True, "Database Version": version, "timestamp": datetime.now()}
+        version = db.execute(
+            text("SELECT version_num FROM alembic_version")
+        ).scalar_one()
+        return {
+            "Migration Status": "Database ready",
+            "Migrations in sync": True,
+            "Database Version": version,
+            "timestamp": datetime.now(),
+        }
     except Exception:
         # DB up mais migrations pas appliquées
-        return {"Migration Status": "Database not-ready", "Migrations in sync": False, "Database Version": None, "timestamp": datetime.utcnow()}
+        return {
+            "Migration Status": "Database not-ready",
+            "Migrations in sync": False,
+            "Database Version": None,
+            "timestamp": datetime.utcnow(),
+        }
+
 
 app.include_router(auth_routes.router)
 app.include_router(user_routes.router)

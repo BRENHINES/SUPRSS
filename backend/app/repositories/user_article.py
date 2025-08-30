@@ -1,8 +1,10 @@
-from typing import Optional, Tuple, Sequence
-from sqlalchemy import select, and_, func
+from typing import Optional, Sequence, Tuple
+
+from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session
 
 from ..models.article import UserArticle
+
 
 class UserArticleRepository:
     def __init__(self, db: Session):
@@ -46,5 +48,9 @@ class UserArticleRepository:
         if is_archived is not None:
             stmt = stmt.where(UserArticle.is_archived == is_archived)
         total = self.db.scalar(select(func.count()).select_from(stmt.subquery()))
-        stmt = stmt.order_by(UserArticle.created_at.desc()).offset((page - 1) * size).limit(size)
+        stmt = (
+            stmt.order_by(UserArticle.created_at.desc())
+            .offset((page - 1) * size)
+            .limit(size)
+        )
         return self.db.scalars(stmt).all(), int(total or 0)

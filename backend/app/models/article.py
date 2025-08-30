@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, Index
+from sqlalchemy import (Boolean, Column, DateTime, ForeignKey, Index, Integer,
+                        String, Text)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -20,7 +21,9 @@ class Article(Base):
 
     # Métadonnées
     published_at = Column(DateTime(timezone=True), nullable=True, index=True)
-    updated_at_source = Column(DateTime(timezone=True), nullable=True)  # Mise à jour côté source
+    updated_at_source = Column(
+        DateTime(timezone=True), nullable=True
+    )  # Mise à jour côté source
 
     # Classification automatique
     language = Column(String(10), nullable=True)
@@ -42,18 +45,24 @@ class Article(Base):
     feed_id = Column(Integer, ForeignKey("feeds.id"), nullable=False, index=True)
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     # Relations
     feed = relationship("Feed", back_populates="articles")
-    user_interactions = relationship("UserArticle", back_populates="article", cascade="all, delete-orphan")
-    comments = relationship("Comment", back_populates="article", cascade="all, delete-orphan")
+    user_interactions = relationship(
+        "UserArticle", back_populates="article", cascade="all, delete-orphan"
+    )
+    comments = relationship(
+        "Comment", back_populates="article", cascade="all, delete-orphan"
+    )
 
     # Index composites pour les performances
     __table_args__ = (
-        Index('ix_articles_feed_published', 'feed_id', 'published_at'),
-        Index('ix_articles_guid_feed', 'guid', 'feed_id', unique=True),
+        Index("ix_articles_feed_published", "feed_id", "published_at"),
+        Index("ix_articles_guid_feed", "guid", "feed_id", unique=True),
     )
 
     def __repr__(self):
@@ -62,6 +71,7 @@ class Article(Base):
 
 class UserArticle(Base):
     """Table de liaison pour les interactions utilisateur-article"""
+
     __tablename__ = "user_articles"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -84,7 +94,9 @@ class UserArticle(Base):
     user_rating = Column(Integer, nullable=True)  # 1-5 étoiles
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     # Relations
@@ -93,9 +105,9 @@ class UserArticle(Base):
 
     # Index unique pour éviter les doublons
     __table_args__ = (
-        Index('ix_user_articles_unique', 'user_id', 'article_id', unique=True),
-        Index('ix_user_articles_read', 'user_id', 'is_read'),
-        Index('ix_user_articles_favorite', 'user_id', 'is_favorite'),
+        Index("ix_user_articles_unique", "user_id", "article_id", unique=True),
+        Index("ix_user_articles_read", "user_id", "is_read"),
+        Index("ix_user_articles_favorite", "user_id", "is_favorite"),
     )
 
     def __repr__(self):

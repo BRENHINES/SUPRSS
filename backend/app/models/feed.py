@@ -1,7 +1,10 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Enum as PgEnum
+import enum
+
+from sqlalchemy import Column, DateTime
+from sqlalchemy import Enum as PgEnum
+from sqlalchemy import ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-import enum
 
 from ..core.database import Base
 
@@ -32,7 +35,9 @@ class Category(Base):
     description = Column(Text, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     # Relations
     feed_categories = relationship("FeedCategory", back_populates="category")
@@ -78,18 +83,26 @@ class Feed(Base):
     last_error_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relations
-    collection_id = Column(Integer, ForeignKey("collections.id"), nullable=False, index=True)
+    collection_id = Column(
+        Integer, ForeignKey("collections.id"), nullable=False, index=True
+    )
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     # Relations
     collection = relationship("Collection", back_populates="feeds")
     creator = relationship("User")
-    articles = relationship("Article", back_populates="feed", cascade="all, delete-orphan")
-    categories = relationship("FeedCategory", back_populates="feed", cascade="all, delete-orphan")
+    articles = relationship(
+        "Article", back_populates="feed", cascade="all, delete-orphan"
+    )
+    categories = relationship(
+        "FeedCategory", back_populates="feed", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<Feed(id={self.id}, title='{self.title}', url='{self.url}')>"
@@ -100,10 +113,14 @@ class FeedCategory(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     feed_id = Column(Integer, ForeignKey("feeds.id"), nullable=False, index=True)
-    category_id = Column(Integer, ForeignKey("categories.id"), nullable=False, index=True)
+    category_id = Column(
+        Integer, ForeignKey("categories.id"), nullable=False, index=True
+    )
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     # Relations
     feed = relationship("Feed", back_populates="categories")

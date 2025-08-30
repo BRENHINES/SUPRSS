@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, Table
+from sqlalchemy import (Boolean, Column, DateTime, ForeignKey, Integer, String,
+                        Table, Text)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -31,25 +32,37 @@ class Collection(Base):
     total_members = Column(Integer, default=1, nullable=False)  # Owner inclus
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     last_activity = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relations
     owner = relationship("User", back_populates="owned_collections")
-    members = relationship("CollectionMember", back_populates="collection", cascade="all, delete-orphan")
-    feeds = relationship("Feed", back_populates="collection", cascade="all, delete-orphan")
-    chat_messages = relationship("ChatMessage", back_populates="collection", cascade="all, delete-orphan")
+    members = relationship(
+        "CollectionMember", back_populates="collection", cascade="all, delete-orphan"
+    )
+    feeds = relationship(
+        "Feed", back_populates="collection", cascade="all, delete-orphan"
+    )
+    chat_messages = relationship(
+        "ChatMessage", back_populates="collection", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
-        return f"<Collection(id={self.id}, name='{self.name}', owner_id={self.owner_id})>"
+        return (
+            f"<Collection(id={self.id}, name='{self.name}', owner_id={self.owner_id})>"
+        )
 
 
 class CollectionMember(Base):
     __tablename__ = "collection_members"
 
     id = Column(Integer, primary_key=True, index=True)
-    collection_id = Column(Integer, ForeignKey("collections.id"), nullable=False, index=True)
+    collection_id = Column(
+        Integer, ForeignKey("collections.id"), nullable=False, index=True
+    )
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
 
     # Permissions granulaires
@@ -71,13 +84,19 @@ class CollectionMember(Base):
     invitation_accepted_at = Column(DateTime(timezone=True), nullable=True)
 
     # Timestamps
-    joined_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    joined_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     last_activity = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relations
     collection = relationship("Collection", back_populates="members")
-    user = relationship("User", back_populates="collection_memberships", foreign_keys=[user_id])
-    inviter = relationship("User", back_populates="invitations_sent", foreign_keys=[invited_by])
+    user = relationship(
+        "User", back_populates="collection_memberships", foreign_keys=[user_id]
+    )
+    inviter = relationship(
+        "User", back_populates="invitations_sent", foreign_keys=[invited_by]
+    )
 
     def __repr__(self):
         return f"<CollectionMember(collection_id={self.collection_id}, user_id={self.user_id})>"

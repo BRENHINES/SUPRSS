@@ -1,15 +1,15 @@
 from typing import Optional
 
-from psycopg2 import extras
-from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
+from psycopg2 import extras
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
-from ..repositories.user import UserRepository
 from ..core.security import hash_password, verify_password
 from ..models.user import User
-from ..services.blob_storage_service import AzureBlobStorage
-from ..services.blob_storage_service import delete_avatar_blob_by_url
+from ..repositories.user import UserRepository
+from ..services.blob_storage_service import (AzureBlobStorage,
+                                             delete_avatar_blob_by_url)
 
 
 class UserService:
@@ -17,17 +17,30 @@ class UserService:
         self.db = db
         self.users = UserRepository(db)
 
-    def _ensure_unique(self, *, email: Optional[str], username: Optional[str], exclude_id: Optional[int] = None) -> None:
+    def _ensure_unique(
+        self,
+        *,
+        email: Optional[str],
+        username: Optional[str],
+        exclude_id: Optional[int] = None
+    ) -> None:
         if email:
             existing = self.users.get_by_email(email)
             if existing and existing.id != exclude_id:
-                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already in use")
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT, detail="Email already in use"
+                )
         if username:
             existing = self.users.get_by_username(username)
             if existing and existing.id != exclude_id:
-                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username already in use")
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Username already in use",
+                )
 
-    def create_user(self, *, email: str, username: str, password: Optional[str], **extras) -> User:
+    def create_user(
+        self, *, email: str, username: str, password: Optional[str], **extras
+    ) -> User:
         # Pré-check applicatif (meilleurs messages + UX)
         self._ensure_unique(email=email, username=username)
 
@@ -45,22 +58,42 @@ class UserService:
             self.db.rollback()
             # Si jamais une course survient, on convertit en 409 propre
             pgcode = getattr(getattr(e, "orig", None), "pgcode", None)
-            cname = getattr(getattr(getattr(e, "orig", None), "diag", None), "constraint_name", None)
+            cname = getattr(
+                getattr(getattr(e, "orig", None), "diag", None), "constraint_name", None
+            )
             if pgcode == "23505":  # unique_violation (Postgres)
                 if cname in {"uq_users_email"}:
-                    raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already in use")
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail="Email already in use",
+                    )
                 if cname in {"uq_users_username"}:
-                    raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username already in use")
-                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Duplicate key")
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail="Username already in use",
+                    )
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT, detail="Duplicate key"
+                )
             raise
 
         self.db.refresh(user)
         return user
 
-    def update_user(self, user_id: int, *, email: Optional[str] = None, username: Optional[str] = None, password: Optional[str] = None, **extra) -> User:
+    def update_user(
+        self,
+        user_id: int,
+        *,
+        email: Optional[str] = None,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        **extra
+    ) -> User:
         user = self.users.get_by_id(user_id)
         if not user:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+            )
 
         # Unicity checks (si email/username changent)
         self._ensure_unique(
@@ -95,11 +128,21 @@ class UserService:
         self.db.refresh(user)
         return user
 
-    def change_password(self, *, user: User, old_password: str, new_password: str) -> User:
-        if not user.hashed_password or not verify_password(old_password, user.hashed_password):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Old password is invalid")
+    def change_password(
+        self, *, user: User, old_password: str, new_password: str
+    ) -> User:
+        if not user.hashed_password or not verify_password(
+            old_password, user.hashed_password
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Old password is invalid",
+            )
         if verify_password(new_password, user.hashed_password):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="New password must be different")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="New password must be different",
+            )
 
         user.hashed_password = hash_password(new_password)
         self.db.add(user)
@@ -143,18 +186,26 @@ class UserService:
             delete_avatar_blob_by_url(old)
         return user
 
-    def delete_user(self, *, target_id: int, actor_id: int, hard_delete: bool = True) -> None:
+    def delete_user(
+        self, *, target_id: int, actor_id: int, hard_delete: bool = True
+    ) -> None:
         target = self.users.get_by_id(target_id)
         if not target:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+            )
 
         actor = self.users.get_by_id(actor_id)
         if not actor:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized"
+            )
 
         # Autorisation : admin ou self
         if not (actor.is_superuser or actor.id == target.id):
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden"
+            )
 
         # Optionnel: retirer l'avatar du blob storage
         try:

@@ -1,6 +1,8 @@
-from pydantic import BaseModel, Field
-from typing import Optional, Dict
 from datetime import datetime
+from typing import Dict, Optional
+
+from pydantic import BaseModel, Field
+
 
 class ChatCreate(BaseModel):
     content: str = Field(..., min_length=1, max_length=2000)
@@ -8,12 +10,15 @@ class ChatCreate(BaseModel):
     reply_to_id: Optional[int] = None
     metadata_json: Optional[str] = None  # brut si besoin
 
+
 class ChatUpdate(BaseModel):
     content: Optional[str] = Field(None, min_length=1)
     is_deleted: Optional[bool] = None
 
+
 class ReactionRequest(BaseModel):
     emoji: str = Field(..., min_length=1, max_length=32)
+
 
 class ChatOut(BaseModel):
     id: int

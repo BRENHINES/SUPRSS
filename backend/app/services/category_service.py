@@ -1,9 +1,10 @@
 from typing import Optional, Tuple
+
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from ..repositories.category import CategoryRepository
 from ..models.feed import Category, Feed
+from ..repositories.category import CategoryRepository
 from ..repositories.feed import FeedRepository
 
 
@@ -17,26 +18,49 @@ class CategoryService:
         self.categories = CategoryRepository(db)
         self.feeds = FeedRepository(db)
 
-    def create(self, *, name: str, color: Optional[str], icon: Optional[str], description: Optional[str]) -> Category:
+    def create(
+        self,
+        *,
+        name: str,
+        color: Optional[str],
+        icon: Optional[str],
+        description: Optional[str]
+    ) -> Category:
         name_n = _norm_name(name)
         if self.categories.get_by_name(name_n):
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Category name already exists")
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Category name already exists",
+            )
         cat = Category(name=name_n, color=color, icon=icon, description=description)
         self.db.add(cat)
         self.db.commit()
         self.db.refresh(cat)
         return cat
 
-    def update(self, category_id: int, *, name: Optional[str], color: Optional[str], icon: Optional[str], description: Optional[str]) -> Category:
+    def update(
+        self,
+        category_id: int,
+        *,
+        name: Optional[str],
+        color: Optional[str],
+        icon: Optional[str],
+        description: Optional[str]
+    ) -> Category:
         cat = self.categories.get_by_id(category_id)
         if not cat:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Category not found"
+            )
 
         if name is not None:
             name_n = _norm_name(name)
             other = self.categories.get_by_name(name_n)
             if other and other.id != cat.id:
-                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Category name already exists")
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Category name already exists",
+                )
             cat.name = name_n
         if color is not None:
             cat.color = color
@@ -53,7 +77,9 @@ class CategoryService:
     def delete(self, category_id: int) -> None:
         cat = self.categories.get_by_id(category_id)
         if not cat:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Category not found"
+            )
         self.db.delete(cat)
         self.db.commit()
 
@@ -70,7 +96,9 @@ class CategoryService:
         return affected
 
     def list_with_counts(self, *, search: Optional[str], page: int, size: int):
-        rows, total = self.categories.list_with_counts(search=search, page=page, size=size)
+        rows, total = self.categories.list_with_counts(
+            search=search, page=page, size=size
+        )
         # map -> list[dict] pour CategoryWithCountOut
         items = [
             {
@@ -88,5 +116,7 @@ class CategoryService:
     def get_by_name(self, name: str) -> Category:
         cat = self.categories.get_by_name(name)
         if not cat:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Category not found"
+            )
         return cat

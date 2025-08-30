@@ -1,7 +1,8 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, Enum
+import enum
+
+from sqlalchemy import Boolean, Column, DateTime, Enum, Integer, String, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-import enum
 
 from ..core.database import Base
 
@@ -25,7 +26,9 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(255), unique=True, index=True, nullable=False)
     username = Column(String(50), unique=True, index=True, nullable=False)
-    hashed_password = Column(String(255), nullable=True)  # Nullable pour OAuth uniquement
+    hashed_password = Column(
+        String(255), nullable=True
+    )  # Nullable pour OAuth uniquement
 
     # Informations personnelles
     full_name = Column(String(100), nullable=True)
@@ -53,20 +56,43 @@ class User(Base):
     total_articles_read = Column(Integer, default=0, nullable=False)
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     last_login = Column(DateTime(timezone=True), nullable=True)
     email_verified_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relations
-    owned_collections = relationship("Collection", back_populates="owner", cascade="all, delete-orphan")
-    collection_memberships = relationship("CollectionMember", back_populates="user", foreign_keys="CollectionMember.user_id", cascade="all, delete-orphan")
-    invitations_sent = relationship("CollectionMember", back_populates="inviter", foreign_keys="CollectionMember.invited_by",)
-    user_articles = relationship("UserArticle", back_populates="user", cascade="all, delete-orphan")
-    comments = relationship("Comment", back_populates="author", cascade="all, delete-orphan")
-    chat_messages = relationship("ChatMessage", back_populates="author", cascade="all, delete-orphan")
-    import_jobs = relationship("ImportJob", back_populates="user", cascade="all, delete-orphan")
-    sessions = relationship("UserSession", back_populates="user", cascade="all, delete-orphan")
+    owned_collections = relationship(
+        "Collection", back_populates="owner", cascade="all, delete-orphan"
+    )
+    collection_memberships = relationship(
+        "CollectionMember",
+        back_populates="user",
+        foreign_keys="CollectionMember.user_id",
+        cascade="all, delete-orphan",
+    )
+    invitations_sent = relationship(
+        "CollectionMember",
+        back_populates="inviter",
+        foreign_keys="CollectionMember.invited_by",
+    )
+    user_articles = relationship(
+        "UserArticle", back_populates="user", cascade="all, delete-orphan"
+    )
+    comments = relationship(
+        "Comment", back_populates="author", cascade="all, delete-orphan"
+    )
+    chat_messages = relationship(
+        "ChatMessage", back_populates="author", cascade="all, delete-orphan"
+    )
+    import_jobs = relationship(
+        "ImportJob", back_populates="user", cascade="all, delete-orphan"
+    )
+    sessions = relationship(
+        "UserSession", back_populates="user", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<User(id={self.id}, username='{self.username}', email='{self.email}')>"

@@ -1,16 +1,17 @@
 # backend/app/core/errors.py
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
-from sqlalchemy.exc import SQLAlchemyError
 import logging
-from fastapi.exceptions import RequestValidationError
-from starlette.exceptions import HTTPException as StarletteHTTPException
-from sqlalchemy.exc import IntegrityError
-from .config import settings
-from ..schemas.common import ErrorResponse
 
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+from ..schemas.common import ErrorResponse
+from .config import settings
 
 logger = logging.getLogger(__name__)
+
 
 class AppError(Exception):
     status_code = 400
@@ -21,17 +22,21 @@ class AppError(Exception):
         self.details = details
         super().__init__(message)
 
+
 class NotFoundError(AppError):
     status_code = 404
     code = "ResourceNotFound"
+
 
 class ConflictError(AppError):
     status_code = 409
     code = "Conflict"
 
+
 class AuthError(AppError):
     status_code = 401
     code = "Unauthorized"
+
 
 class ForbiddenError(AppError):
     status_code = 403
@@ -54,6 +59,7 @@ def install_exception_handlers(app: FastAPI):
             status_code=500,
             content={"detail": "Internal server error"},
         )
+
 
 def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(RequestValidationError)
@@ -88,7 +94,9 @@ def register_exception_handlers(app: FastAPI) -> None:
         else:
             code = "INTEGRITY_ERROR"
             error = "Erreur d'intégrité"
-        payload = ErrorResponse(error=error, code=code, detail=str(exc.orig)).model_dump()
+        payload = ErrorResponse(
+            error=error, code=code, detail=str(exc.orig)
+        ).model_dump()
         return JSONResponse(status_code=409, content=payload)
 
     @app.exception_handler(Exception)

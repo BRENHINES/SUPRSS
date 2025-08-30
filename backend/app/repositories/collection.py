@@ -1,9 +1,11 @@
 from typing import Optional, Sequence, Tuple
-from sqlalchemy import select, func, or_, and_
+
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
 
+from ..models.collection import (Collection,  # adapte si besoin
+                                 CollectionMember)
 from .base import SQLRepository
-from ..models.collection import Collection, CollectionMember  # adapte si besoin
 
 
 class CollectionRepository(SQLRepository[Collection]):
@@ -26,27 +28,43 @@ class CollectionRepository(SQLRepository[Collection]):
             select(Collection)
             .outerjoin(
                 CollectionMember,
-                and_(CollectionMember.collection_id == Collection.id,
-                     CollectionMember.user_id == user_id,
-                     CollectionMember.is_active == True)  # noqa: E712
+                and_(
+                    CollectionMember.collection_id == Collection.id,
+                    CollectionMember.user_id == user_id,
+                    CollectionMember.is_active == True,
+                ),  # noqa: E712
             )
             .where(or_(Collection.owner_id == user_id, CollectionMember.id.isnot(None)))
         )
         if q:
             like = f"%{q.strip()}%"
-            base = base.where(or_(Collection.name.ilike(like), Collection.slug.ilike(like)))
+            base = base.where(
+                or_(Collection.name.ilike(like), Collection.slug.ilike(like))
+            )
 
         total = self.session.scalar(select(func.count()).select_from(base.subquery()))
-        stmt = base.order_by(Collection.last_activity.desc()).offset((page - 1) * size).limit(size)
+        stmt = (
+            base.order_by(Collection.last_activity.desc())
+            .offset((page - 1) * size)
+            .limit(size)
+        )
         items = self.session.scalars(stmt).all()
         return items, int(total or 0)
 
-    def list_all(self, *, q: Optional[str], page: int, size: int) -> Tuple[Sequence[Collection], int]:
+    def list_all(
+        self, *, q: Optional[str], page: int, size: int
+    ) -> Tuple[Sequence[Collection], int]:
         stmt = select(Collection)
         if q:
             like = f"%{q.strip()}%"
-            stmt = stmt.where(or_(Collection.name.ilike(like), Collection.slug.ilike(like)))
+            stmt = stmt.where(
+                or_(Collection.name.ilike(like), Collection.slug.ilike(like))
+            )
         total = self.session.scalar(select(func.count()).select_from(stmt.subquery()))
-        stmt = stmt.order_by(Collection.last_activity.desc()).offset((page - 1) * size).limit(size)
+        stmt = (
+            stmt.order_by(Collection.last_activity.desc())
+            .offset((page - 1) * size)
+            .limit(size)
+        )
         items = self.session.scalars(stmt).all()
         return items, int(total or 0)

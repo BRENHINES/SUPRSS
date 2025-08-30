@@ -1,14 +1,18 @@
 from typing import Optional
-from fastapi import APIRouter, Depends, UploadFile, File, Form, BackgroundTasks, HTTPException, status
+
+from fastapi import (APIRouter, BackgroundTasks, Depends, File, Form,
+                     HTTPException, UploadFile, status)
 from sqlalchemy.orm import Session
 
-from ..core.database import get_db, SessionLocal  # SessionLocal pour la tâche de fond
 from ..api.deps import get_current_user
+from ..core.database import (  # SessionLocal pour la tâche de fond
+    SessionLocal, get_db)
 from ..models.import_job import FileFormat, ImportStatus
 from ..repositories.import_job import ImportJobRepository
 from ..services.import_service import ImportService
 
 router = APIRouter(prefix="/api/imports", tags=["Imports"])
+
 
 @router.post("", status_code=201)
 async def create_import_job(
@@ -17,7 +21,7 @@ async def create_import_job(
     target_collection_id: int = Form(...),
     override_existing: bool = Form(False),
     db: Session = Depends(get_db),
-    user = Depends(get_current_user),
+    user=Depends(get_current_user),
 ):
     # déduire format par extension simple
     ext = (file.filename.split(".")[-1] or "").lower()
@@ -48,25 +52,32 @@ async def create_import_job(
     background.add_task(_worker, job.id, data)
     return {"id": job.id, "status": job.status, "progress": job.progress_percentage}
 
+
 @router.get("", summary="Liste des imports (user)")
-def list_my_imports(db: Session = Depends(get_db), user = Depends(get_current_user)):
+def list_my_imports(db: Session = Depends(get_db), user=Depends(get_current_user)):
     items = ImportJobRepository(db).list_for_user(user.id)
-    return [{
-        "id": j.id,
-        "filename": j.filename,
-        "format": j.file_format.value,
-        "status": j.status.value,
-        "progress": j.progress_percentage,
-        "imported": j.imported_feeds,
-        "failed": j.failed_feeds,
-        "skipped": j.skipped_feeds,
-        "total": j.total_feeds,
-        "created_at": j.created_at,
-        "completed_at": j.completed_at,
-    } for j in items]
+    return [
+        {
+            "id": j.id,
+            "filename": j.filename,
+            "format": j.file_format.value,
+            "status": j.status.value,
+            "progress": j.progress_percentage,
+            "imported": j.imported_feeds,
+            "failed": j.failed_feeds,
+            "skipped": j.skipped_feeds,
+            "total": j.total_feeds,
+            "created_at": j.created_at,
+            "completed_at": j.completed_at,
+        }
+        for j in items
+    ]
+
 
 @router.get("/{job_id}")
-def get_import(job_id: int, db: Session = Depends(get_db), user = Depends(get_current_user)):
+def get_import(
+    job_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)
+):
     repo = ImportJobRepository(db)
     job = repo.get(job_id)
     if not job or job.user_id != user.id:
@@ -85,8 +96,11 @@ def get_import(job_id: int, db: Session = Depends(get_db), user = Depends(get_cu
         "error": job.error_message,
     }
 
+
 @router.post("/{job_id}/cancel", status_code=202)
-def cancel_import(job_id: int, db: Session = Depends(get_db), user = Depends(get_current_user)):
+def cancel_import(
+    job_id: int, db: Session = Depends(get_db), user=Depends(get_current_user)
+):
     repo = ImportJobRepository(db)
     job = repo.get(job_id)
     if not job or job.user_id != user.id:

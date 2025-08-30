@@ -1,6 +1,8 @@
-from pydantic import BaseModel, Field
-from typing import Optional
 from datetime import datetime
+from typing import Optional
+
+from pydantic import BaseModel, Field
+
 
 class ArticleOut(BaseModel):
     id: int
@@ -18,6 +20,7 @@ class ArticleOut(BaseModel):
 
     model_config = {"from_attributes": True}
 
+
 class ArticleUserState(BaseModel):
     is_read: bool = False
     is_favorite: bool = False
@@ -25,9 +28,11 @@ class ArticleUserState(BaseModel):
     user_notes: Optional[str] = None
     user_rating: Optional[int] = None  # 1-5
 
+
 class ArticleWithState(BaseModel):
     article: ArticleOut
     state: ArticleUserState
+
 
 class InteractionUpdate(BaseModel):
     is_read: Optional[bool] = None

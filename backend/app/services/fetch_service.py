@@ -1,15 +1,18 @@
 from __future__ import annotations
-from typing import Optional, Tuple
+
 from datetime import datetime, timezone
-import httpx
+from typing import Optional, Tuple
+
 import feedparser
-from sqlalchemy.orm import Session
+import httpx
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
 from ..core.config import settings
-from ..models.feed import Feed
 from ..models.article import Article
+from ..models.feed import Feed
 from ..repositories.feed import FeedRepository
+
 
 class FetchService:
     def __init__(self, db: Session):
@@ -68,7 +71,11 @@ class FetchService:
                     language=None,
                     word_count=None,
                     reading_time=None,
-                    image_url=(entry.get("media_thumbnail",[{}])[0].get("url") if entry.get("media_thumbnail") else None),
+                    image_url=(
+                        entry.get("media_thumbnail", [{}])[0].get("url")
+                        if entry.get("media_thumbnail")
+                        else None
+                    ),
                     enclosure_url=None,
                     enclosure_type=None,
                     enclosure_length=None,

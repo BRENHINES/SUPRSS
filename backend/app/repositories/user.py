@@ -1,9 +1,10 @@
 from typing import Optional, Sequence, Tuple
-from sqlalchemy import select, func
+
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from .base import SQLRepository
 from ..models.user import User
+from .base import SQLRepository
 
 
 class UserRepository(SQLRepository[User]):
@@ -23,10 +24,7 @@ class UserRepository(SQLRepository[User]):
 
     def list(self, *, page: int = 1, size: int = 20) -> Sequence[User]:
         stmt = (
-            select(User)
-            .order_by(User.id.desc())
-            .offset((page - 1) * size)
-            .limit(size)
+            select(User).order_by(User.id.desc()).offset((page - 1) * size).limit(size)
         )
         return self.session.scalars(stmt).all()
 
@@ -40,13 +38,12 @@ class UserRepository(SQLRepository[User]):
     ) -> User:
         # Ici on ne hash pas : ça sera le rôle du service.
         return self.create(
-            email=email,
-            username=username,
-            hashed_password=hashed_password,
-            **extra
+            email=email, username=username, hashed_password=hashed_password, **extra
         )
 
-    def list_paginated(self, *, page: int = 1, size: int = 20) -> Tuple[Sequence[User], int]:
+    def list_paginated(
+        self, *, page: int = 1, size: int = 20
+    ) -> Tuple[Sequence[User], int]:
         page = max(1, page)
         size = max(1, min(size, 100))
         stmt = select(User).order_by(User.id).limit(size).offset((page - 1) * size)

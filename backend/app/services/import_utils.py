@@ -1,9 +1,11 @@
 from __future__ import annotations
-from typing import List, Dict
-import xml.etree.ElementTree as ET
+
 import csv
 import io
 import json
+import xml.etree.ElementTree as ET
+from typing import Dict, List
+
 
 def parse_opml_feeds(data: bytes) -> List[Dict[str, str]]:
     """
@@ -19,6 +21,7 @@ def parse_opml_feeds(data: bytes) -> List[Dict[str, str]]:
             out.append({"title": title, "url": url})
     return out
 
+
 def parse_json_feeds(data: bytes) -> List[Dict[str, str]]:
     js = json.loads(data.decode("utf-8"))
     # attend soit {"feeds":[{"title":..., "url":...}, ...]} soit liste directe
@@ -29,6 +32,7 @@ def parse_json_feeds(data: bytes) -> List[Dict[str, str]]:
         if url:
             out.append({"title": it.get("title") or url, "url": url})
     return out
+
 
 def parse_csv_feeds(data: bytes) -> List[Dict[str, str]]:
     f = io.StringIO(data.decode("utf-8"))

@@ -1,14 +1,16 @@
 import logging
 from typing import Any
+
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from .errors import AppError
 from ..schemas.common import ErrorResponse
+from .errors import AppError
 
 logger = logging.getLogger("app")
+
 
 def _to_jsonable(obj: Any):
     if isinstance(obj, (bytes, bytearray)):
@@ -21,8 +23,15 @@ def _to_jsonable(obj: Any):
         return str(obj)
     return obj
 
-def _json_error(*, code: str, message: str, status_code: int,
-                details: Any = None, request_id: str | None = None) -> JSONResponse:
+
+def _json_error(
+    *,
+    code: str,
+    message: str,
+    status_code: int,
+    details: Any = None,
+    request_id: str | None = None
+) -> JSONResponse:
     payload = ErrorResponse(
         error=code,
         message=message,
@@ -30,6 +39,7 @@ def _json_error(*, code: str, message: str, status_code: int,
         request_id=request_id,
     ).model_dump()
     return JSONResponse(status_code=status_code, content=payload)
+
 
 def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(RequestValidationError)
@@ -44,7 +54,12 @@ def register_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(StarletteHTTPException)
     async def _http_handler(request: Request, exc: StarletteHTTPException):
-        code_map = {404: "NotFound", 409: "Conflict", 401: "Unauthorized", 403: "Forbidden"}
+        code_map = {
+            404: "NotFound",
+            409: "Conflict",
+            401: "Unauthorized",
+            403: "Forbidden",
+        }
         # detail peut être str / dict / list
         msg = exc.detail if isinstance(exc.detail, str) else "HTTP error"
         det = None if isinstance(exc.detail, str) else exc.detail
@@ -68,7 +83,9 @@ def register_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(Exception)
     async def _unhandled_handler(request: Request, exc: Exception):
-        logger.exception("Unhandled error on %s %s", request.method, request.url, exc_info=exc)
+        logger.exception(
+            "Unhandled error on %s %s", request.method, request.url, exc_info=exc
+        )
         return _json_error(
             code="InternalServerError",
             message="An unexpected error occurred.",

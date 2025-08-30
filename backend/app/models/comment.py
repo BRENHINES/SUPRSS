@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Boolean
+from sqlalchemy import (Boolean, Column, DateTime, ForeignKey, Integer, String,
+                        Text)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -13,7 +14,9 @@ class Comment(Base):
 
     # Hiérarchie des commentaires (réponses)
     parent_id = Column(Integer, ForeignKey("comments.id"), nullable=True, index=True)
-    thread_level = Column(Integer, default=0, nullable=False)  # Profondeur dans le thread
+    thread_level = Column(
+        Integer, default=0, nullable=False
+    )  # Profondeur dans le thread
 
     # Modération
     is_edited = Column(Boolean, default=False, nullable=False)
@@ -29,7 +32,9 @@ class Comment(Base):
     author_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     # Relations
