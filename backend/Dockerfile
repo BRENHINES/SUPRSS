@@ -12,11 +12,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/*
 
 # le contexte est backend/, donc requirements.txt est ici
-COPY requirements.txt /app/requirements.txt
+COPY backend/requirements.txt /app/requirements.txt
 RUN python -m pip install --upgrade pip && pip install -r /app/requirements.txt
 
-# copie tout le code backend (y compris alembic.ini et migrations)
+# copie tout le code backend
 COPY . /app
+COPY backend /app/backend
+COPY alembic.ini /app/alembic.ini
 
 # IMPORTANT: ici le package est "app" (pas "backend.app"), car on a /app/app/...
 ENV PYTHONPATH=/app
