@@ -117,3 +117,18 @@ class AuthService:
 
     def logout_all(self, *, user_id: int) -> int:
         return self.sessions.revoke_all_for_user(user_id)
+
+    def mint_for_user(self, user: User, user_agent: str | None, ip: str | None):
+        """
+        Crée un access_token + refresh_token pour un user déjà identifié (ex: OAuth).
+        Retourne (access, access_ttl_seconds, refresh, refresh_expires_at_iso).
+        """
+        # 1) Access token (réutilise ton mécanisme existant)
+        access_token, access_ttl = self._create_access_token(user_id=user.id)  # adapte ce nom à ton code
+
+        # 2) Refresh session (réutilise ton mécanisme existant)
+        refresh_token, refresh_expires_at = self._create_refresh_session(  # adapte à ton code
+            user_id=user.id, user_agent=user_agent, ip=ip
+        )
+
+        return access_token, access_ttl, refresh_token, refresh_expires_at

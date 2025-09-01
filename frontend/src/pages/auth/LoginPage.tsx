@@ -41,9 +41,10 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  const oauth = (provider: string) => {
-    window.location.href = `${import.meta.env.VITE_API_URL}/api/auth/oauth/${provider}`;
-  };
+  const oauth = (provider: "google" | "github") => {
+  const base = (import.meta.env.VITE_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
+  window.location.href = `${base}/api/auth/oauth/${provider}`;
+};
 
   return (
     <AuthLayout title="Connexion" subtitle="Minimal, rapide, centré — style Medium">
@@ -72,7 +73,6 @@ const LoginPage: React.FC = () => {
       <div className="mt-6 space-y-2">
         <button onClick={() => oauth('google')} className="w-full border py-2 rounded-lg">Continuer avec Google</button>
         <button onClick={() => oauth('github')} className="w-full border py-2 rounded-lg">Continuer avec GitHub</button>
-        <button onClick={() => oauth('microsoft')} className="w-full border py-2 rounded-lg">Continuer avec Microsoft</button>
       </div>
     </AuthLayout>
   );
