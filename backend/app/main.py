@@ -25,6 +25,8 @@ from .core.errors import install_exception_handlers
 from .core.exception_handlers import register_exception_handlers
 from .core.logging import configure_logging
 from .schemas.common import HealthResponse, ReadyResponse
+from .routes.auth_oauth import router as oauth_router
+from .routes.auth_email import router as email_router
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -35,11 +37,15 @@ app = FastAPI(
 app_logger = logging.getLogger("app.requests")
 
 # --- CORS ---
+ALLOWED_ORIGINS = [
+    "http://localhost:5173",   # Vite
+    "http://localhost:3000",   # React.js
+    #"https://front.onrender.com",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=(
-        (settings.CORS_ORIGINS or ["*"]) if settings.DEBUG else settings.CORS_ORIGINS
-    ),
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -107,3 +113,5 @@ app.include_router(comments_routes.router)
 app.include_router(chat_routes.router)
 app.include_router(imports_routes.router)
 app.include_router(fetch_routes.router)
+app.include_router(oauth_router)
+app.include_router(email_router)
