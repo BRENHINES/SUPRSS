@@ -7,15 +7,19 @@ from fastapi import (APIRouter, Depends, File, HTTPException, Query, Response,
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+from .auth_email import API_BASE
 from ..api.deps import get_current_user, require_admin
 from ..core.config import settings
 from ..core.database import get_db
+from ..models.email_token import EmailTokenPurpose
 from ..repositories.user import UserRepository
 from ..schemas.user import (PasswordChangeRequest, UserCreate, UserFlagsUpdate,
                             UserOut, UserUpdate)
 from ..services.blob_storage_service import (AzureBlobStorage, _service_client,
                                              generate_avatar_upload_sas,
                                              make_avatar_blob_name)
+from ..services.email_service import send_email, verification_email_html
+from ..services.email_tokens import create_email_token
 from ..services.user_service import UserService
 
 router = APIRouter(prefix="/api/users", tags=["Users"])
@@ -42,7 +46,7 @@ class SetAvatarRequest(BaseModel):
 
 # ---------- Routes CRUD utilisateurs ----------
 @router.post("", response_model=UserOut, status_code=201, operation_id="users_create")
-def create_user(data: UserCreate, db: Session = Depends(get_db)):
+async def create_user(data: UserCreate, db: Session = Depends(get_db)):
     svc = UserService(db)
     user = svc.create_user(
         email=data.email,
@@ -52,6 +56,10 @@ def create_user(data: UserCreate, db: Session = Depends(get_db)):
         avatar_url=data.avatar_url,
         bio=data.bio,
     )
+    row = create_email_token(db, user.id, EmailTokenPurpose.VERIFY, ttl_minutes=60 * 24)
+    link = f"{API_BASE}/api/auth/verify-email?token={row.token}"
+    await send_email(user.email, "Bienvenue — vérifie ton e-mail", verification_email_html(link))
+
     return user
 
 
