@@ -7,6 +7,7 @@ import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage'
 import ResetPasswordPage from '@/pages/auth/ResetPasswordPage'
 import VerifyEmailPage from '@/pages/auth/VerifyEmailPage'
 import OAuthCallbackPage from '@/pages/auth/OAuthCallbackPage'
+import AuthOk from "@/pages/auth/AuthOk";
 
 
 const Home: React.FC = () => (
@@ -31,6 +32,7 @@ return (
 <Route path="/verify-email" element={<VerifyEmailPage />} />
 <Route path="/oauth/callback/:provider" element={<OAuthCallbackPage />} />
 
+<Route path="/auth-ok" element={<ProtectedRoute> <AuthOk /> </ProtectedRoute>} />
 
 {/* Protected */}
 <Route

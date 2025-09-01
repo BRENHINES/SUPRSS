@@ -1,39 +1,56 @@
-import axios from "axios";
+import axios, { AxiosHeaders } from "axios";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
-const API_PREFIX = (import.meta.env.VITE_API_PREFIX || "/api").replace(/\/$/, "");
+const BASE = (import.meta.env.VITE_API_URL ?? "https://suprss.onrender.com").replace(/\/$/, "");
+const PREFIX = (import.meta.env.VITE_API_PREFIX ?? "/api").replace(/\/$/, "");
+export const API = axios.create({ baseURL: `${BASE}${PREFIX}` });
 
-export const API = axios.create({
-  baseURL: API_BASE,
-  withCredentials: true, // cookie httpOnly ready
-});
+// Clés uniques, utilisées PARTOUT
+const K = { access: "suprss.access", refresh: "suprss.refresh" };
 
-export type User = { id: number; email: string; username: string };
-export type AuthPayload = { access_token: string; refresh_token?: string; user: User };
+export const getAccessToken = () => localStorage.getItem(K.access);
+export const setAccessToken = (v: string | null) =>
+  v ? localStorage.setItem(K.access, v) : localStorage.removeItem(K.access);
 
-let accessToken: string | null = null;
-let refreshToken: string | null = null;
-export const setAccessToken = (t: string | null) => (accessToken = t);
-export const setRefreshToken = (t: string | null) => (refreshToken = t);
+export const getRefreshToken = () => localStorage.getItem(K.refresh);
+export const setRefreshToken = (v: string | null) =>
+  v ? localStorage.setItem(K.refresh, v) : localStorage.removeItem(K.refresh);
 
-API.interceptors.request.use((config) => {
-  if (accessToken) {
-    config.headers = config.headers || {};
-    (config.headers as any).Authorization = `Bearer ${accessToken}`;
+// Ajout du Bearer proprement (typage Axios)
+API.interceptors.request.use((cfg) => {
+  const token = getAccessToken();
+  if (token) {
+    const headers = new AxiosHeaders(cfg.headers);
+    headers.set("Authorization", `Bearer ${token}`);
+    cfg.headers = headers;
   }
-  return config;
+  return cfg;
 });
+
+export type User = {
+  id: number;
+  email: string;
+  username: string;
+  full_name?: string;
+  avatar_url?: string;
+  bio?: string;
+};
+
+// Corps & réponse attendus par ton backend
+export type LoginBody = { username_or_email: string; password: string };
+export type LoginResp = {
+  token_type: "bearer";
+  access_token: string;
+  refresh_token?: string;
+  access_expires_in?: number;
+  refresh_expires_at?: string;
+};
 
 export const AuthAPI = {
-  me: () => API.get<{ user: User }>(`${API_PREFIX}/auth/me`).then((r) => r.data.user),
-  login: (p: { email: string; password: string }) =>
-    API.post<AuthPayload>(`${API_PREFIX}/auth/login`, p).then((r) => r.data),
-  register: (p: { email: string; username: string; password: string }) =>
-    API.post<AuthPayload>(`${API_PREFIX}/auth/register`, p).then((r) => r.data),
-  logout: () => API.post(`${API_PREFIX}/auth/logout`, {}),
-  forgot: (p: { email: string }) => API.post(`${API_PREFIX}/auth/forgot-password`, p),
-  reset: (p: { token: string; password: string }) => API.post(`${API_PREFIX}/auth/reset-password`, p),
-  verify: (p: { token: string }) => API.post(`${API_PREFIX}/auth/verify-email`, p),
-  oauthCallback: (provider: string, p: { code: string; state?: string }) =>
-    API.post<AuthPayload>(`${API_PREFIX}/auth/oauth/${provider}/callback`, p).then((r) => r.data),
+  me: async () => (await API.get<{ user?: User } | User>("/auth/me")).data,
+  login: async (body: LoginBody) => (await API.post<LoginResp>("/auth/login", body)).data,
+  register: async (p: { email: string; username: string; password: string; full_name?: string }) =>
+    (await API.post<LoginResp>("/users", p)).data,
+  logout: async () => {
+    try { await API.post("/auth/logout", {}); } catch {}
+  },
 };

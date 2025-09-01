@@ -1,12 +1,18 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { AuthAPI, setAccessToken, setRefreshToken, type User } from "./api";
+import {
+  AuthAPI,
+  getAccessToken,
+  setAccessToken,
+  setRefreshToken,
+  type User,
+} from "./api";
 
 export interface AuthState {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, username: string, password: string) => Promise<void>;
+  login: (emailOrUsername: string, password: string) => Promise<void>;
+  register: (email: string, username: string, password: string, full_name?: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -18,56 +24,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const navigate = useNavigate();
   const location = useLocation() as any;
 
+  // Au boot : si un token existe, on tente /auth/me
   useEffect(() => {
-    const at = localStorage.getItem("suprss.access");
-    const rt = localStorage.getItem("suprss.refresh");
-    if (at) setAccessToken(at);
-    if (rt) setRefreshToken(rt);
+    const token = getAccessToken();
+    if (!token) { setLoading(false); return; }
     AuthAPI.me()
-      .then((u) => setUser(u))
+      .then((u) => setUser((u as any).user ?? (u as User)))
       .catch(() => setUser(null))
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => {
-    if (!loading && !user && location.pathname !== "/login") {
-      navigate("/login", { replace: true, state: { from: location } });
-    }
-  }, [user, loading]);
+  // Si non loggé et route protégée -> redirection (gérée par ProtectedRoute)
+  // Ici, on ne force rien : on laisse ProtectedRoute décider.
 
-  const login = async (email: string, password: string) => {
-    const data = await AuthAPI.login({ email, password });
+  const login = async (emailOrUsername: string, password: string) => {
+    // Respecte le schéma du backend
+    const data = await AuthAPI.login({ username_or_email: emailOrUsername, password });
     setAccessToken(data.access_token);
-    localStorage.setItem("suprss.access", data.access_token);
-    if (data.refresh_token) {
-      setRefreshToken(data.refresh_token);
-      localStorage.setItem("suprss.refresh", data.refresh_token);
-    }
-    setUser(data.user);
+    if (data.refresh_token) setRefreshToken(data.refresh_token);
+
+    // Récupération du user après login
+    const me = await AuthAPI.me().catch(() => null);
+    setUser(me ? ((me as any).user ?? (me as User)) : null);
   };
 
-  const register = async (email: string, username: string, password: string) => {
-    const data = await AuthAPI.register({ email, username, password });
+  const register = async (email: string, username: string, password: string, full_name?: string) => {
+    const data = await AuthAPI.register({ email, username, password, full_name });
     setAccessToken(data.access_token);
-    localStorage.setItem("suprss.access", data.access_token);
-    if (data.refresh_token) {
-      setRefreshToken(data.refresh_token);
-      localStorage.setItem("suprss.refresh", data.refresh_token);
-    }
-    setUser(data.user);
+    if (data.refresh_token) setRefreshToken(data.refresh_token);
+    const me = await AuthAPI.me().catch(() => null);
+    setUser(me ? ((me as any).user ?? (me as User)) : null);
   };
 
   const logout = async () => {
     try { await AuthAPI.logout(); } catch {}
     setAccessToken(null);
     setRefreshToken(null);
-    localStorage.removeItem("suprss.access");
-    localStorage.removeItem("suprss.refresh");
     setUser(null);
-    navigate("/login");
+    navigate("/login", { replace: true });
   };
 
-  return <Ctx.Provider value={{ user, loading, login, register, logout }}>{children}</Ctx.Provider>;
+  return (
+    <Ctx.Provider value={{ user, loading, login, register, logout }}>
+      {children}
+    </Ctx.Provider>
+  );
 };
 
 export const useAuth = () => {
