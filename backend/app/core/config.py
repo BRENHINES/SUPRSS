@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     DEBUG: bool = Field(default=True, env="DEBUG")
     ENV: str = Field(default="development", env="ENV")
 
+    api_base: AnyHttpUrl = Field(..., env="API_BASE")
+    frontend_url: AnyHttpUrl = Field(..., env="FRONTEND_URL")
+
     # ------------------------------------------------------------------ #
     # Sécurité
     # ------------------------------------------------------------------ #
