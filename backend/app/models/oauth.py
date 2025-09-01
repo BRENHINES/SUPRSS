@@ -1,30 +1,21 @@
 # backend/app/models/oauth.py
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, UniqueConstraint
-from sqlalchemy.orm import relationship
-from datetime import datetime, timedelta
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import ForeignKey, String, Integer, UniqueConstraint
 from ..core.database import Base
-from sqlalchemy.sql import func
 
 class OAuthAccount(Base):
     __tablename__ = "oauth_accounts"
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    provider = Column(String(50), nullable=False)
-    provider_account_id = Column(String(255), nullable=False)
-    created_at = Column(DateTime, server_default=func.now())
 
-    __table_args__ = (UniqueConstraint('provider', 'provider_account_id', name='uq_provider_account'),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    provider: Mapped[str] = mapped_column(String(50), nullable=False)  # 'google' | 'github' | 'microsoft'
+    provider_account_id: Mapped[str] = mapped_column(String(255), nullable=False)
 
-class EmailToken(Base):
-    __tablename__ = "email_tokens"
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    token = Column(String(255), unique=True, nullable=False)
-    purpose = Column(String(50), nullable=False)
-    expires_at = Column(DateTime, nullable=False)
-    used_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, server_default=func.now())
+    access_token: Mapped[str | None] = mapped_column(String(2048))
+    refresh_token: Mapped[str | None] = mapped_column(String(2048))
+    expires_at: Mapped[int | None] = mapped_column(Integer)
 
-    @staticmethod
-    def default_expiry(hours=48):
-        return datetime.now() + timedelta(hours=hours)
+    __table_args__ = (UniqueConstraint("provider", "provider_account_id",
+                                       name="uq_provider_account"),)
+
+    user = relationship("User", back_populates="oauth_accounts")

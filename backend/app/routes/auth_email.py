@@ -1,13 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
+import os
+
 from ..core.database import get_db
+from ..api.deps import get_current_user
 from ..models.user import User
 from ..models.email_token import EmailTokenPurpose
 from ..services.email_tokens import create_email_token, use_email_token
 from ..services.email_service import send_email, verification_email_html, reset_email_html
-from ..core.security import hash_password  # adapte à ton projet
-import os
+from ..core.security import hash_password
 
 router = APIRouter(prefix="/api/auth", tags=["auth:email"])
 
@@ -22,9 +24,11 @@ class ResetIn(BaseModel):
     password: str
 
 @router.post("/send-verify")
-async def send_verify_email(db: Session = Depends(get_db), current_user: User = Depends(...)):
-    # si tu veux une route "à la demande" pour renvoyer un mail de vérif au user connecté
-    if current_user.is_verified:
+async def send_verify_email(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if getattr(current_user, "is_verified", False):
         return {"detail": "Déjà vérifié."}
     row = create_email_token(db, current_user.id, EmailTokenPurpose.VERIFY, ttl_minutes=60*24)
     link = f"{API_BASE}/api/auth/verify-email?token={row.token}"
@@ -41,8 +45,7 @@ async def verify_email(token: str, db: Session = Depends(get_db)):
         raise HTTPException(404, "Utilisateur introuvable")
     user.is_verified = True
     db.commit()
-    # Redirige éventuellement vers le front
-    return {"ok": True, "message": "Email vérifié"}
+    return {"ok": True}
 
 @router.post("/forgot-password")
 async def forgot_password(body: ForgotIn, db: Session = Depends(get_db)):
@@ -50,8 +53,7 @@ async def forgot_password(body: ForgotIn, db: Session = Depends(get_db)):
     if user:
         row = create_email_token(db, user.id, EmailTokenPurpose.RESET, ttl_minutes=60)
         link = f"{FRONTEND_URL}/reset-password?token={row.token}"
-        await send_email(user.email, "Réinitialise ton mot de passe", reset_email_html(link))
-    # Toujours 200 pour ne pas révéler l’existence d’un compte
+        await send_email(user.email, "Réinitialisation du mot de passe", reset_email_html(link))
     return {"ok": True}
 
 @router.post("/reset-password")

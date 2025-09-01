@@ -9,7 +9,7 @@ class EmailTokenPurpose(str, Enum):
     VERIFY = "verify"
     RESET = "reset"
 
-class EmailToken(Base):  # Assure-toi d'importer Base depuis ton module de modèles
+class EmailToken(Base):
     __tablename__ = "email_tokens"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
