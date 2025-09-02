@@ -40,7 +40,6 @@ def google_start():
         "response_type": "code",
         "redirect_uri": _redirect_uri("google"),
         "scope": "openid email profile",
-        # pas de state pour la version minimale
         "access_type": "offline",
         "prompt": "consent",
     }
