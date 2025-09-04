@@ -38,9 +38,10 @@ import Notifications from '@/pages/dashboard/Notifications'
 
 import Explore from '@/pages/dashboard/Explore'
 import Chat from '@/pages/dashboard/Chat'
+import Home from '@/pages/dashboard/Home'
 
 import Profile from '@/pages/settings/Profile'
-import SettingsProfile from '@/pages/settings/Profile'
+import SettingsProfile from '@/pages/settings/Index'
 import SettingsAccount from '@/pages/settings/Account'
 import SettingsSecurity from '@/pages/settings/Security'
 import SettingsPreferences from '@/pages/settings/Preferences'
@@ -57,16 +58,6 @@ import Onboarding from "@/pages/onboarding/Onboarding";
 import ImportOPML from "@/pages/onboarding/ImportOPML";
 import ExportOPML from "@/pages/onboarding/ExportOPML";
 
-
-const Home: React.FC = () => (
-<div className="min-h-screen grid place-items-center p-10">
-<div className="text-center">
-<h1 className="text-3xl font-semibold">Bienvenue sur SUPRSS</h1>
-<p className="text-neutral-600 mt-2">Zone protégée — vous êtes connecté(e).</p>
-<p className="mt-6"><Link className="text-blue-600" to="/login">Aller à la page de connexion</Link></p>
-</div>
-</div>
-)
 
 const App: React.FC = () => {
 return (
