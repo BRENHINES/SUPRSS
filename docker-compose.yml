@@ -1,65 +1,60 @@
-version: '3.8'
+version: "3.9"
 
 services:
-  postgres:
+  db:
     image: postgres:15-alpine
-    container_name: suprss_postgres
+    container_name: suprss_db
     environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
       POSTGRES_DB: suprss
-      POSTGRES_USER: suprss_user
-      POSTGRES_PASSWORD: suprss_password
-      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./database/init:/docker-entrypoint-initdb.d
-    ports:
-      - "5432:5432"
+      - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U suprss_user -d suprss"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
+      test: ["CMD-SHELL", "pg_isready -U postgres -d suprss"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
     networks:
-      - suprss_network
+      - suprss_net
 
-  redis:
-    image: redis:7-alpine
-    container_name: suprss_redis
-    command: redis-server --requirepass redis_password
-    volumes:
-      - redis_data:/data
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-    networks:
-      - suprss_network
-
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: suprss_pgadmin
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@suprss.com
-      PGADMIN_DEFAULT_PASSWORD: admin123
-    ports:
-      - "5050:80"
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: suprss_backend
+    env_file:
+      - ./backend/.env
     depends_on:
-      - postgres
-    restart: unless-stopped
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "
+      alembic upgrade head &&
+      uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
+      "
+    expose:
+      - "8000"
     networks:
-      - suprss_network
+      - suprss_net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: "http://localhost:8080"
+    container_name: suprss_frontend
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+    networks:
+      - suprss_net
 
 volumes:
-  postgres_data:
-    driver: local
-  redis_data:
-    driver: local
+  db_data:
 
 networks:
-  suprss_network:
+  suprss_net:
     driver: bridge
