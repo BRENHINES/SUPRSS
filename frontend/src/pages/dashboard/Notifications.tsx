@@ -1,124 +1,65 @@
+// src/pages/Notifications.tsx
 import React, { useEffect, useState } from "react";
-import {
-  listNotifications,
-  markAllNotificationsRead,
-  markNotificationRead,
-  type Notification,
-} from "@/services/notifications";
-
-function fmt(dateIso?: string) {
-  if (!dateIso) return "";
-  try { return new Date(dateIso).toLocaleString(); } catch { return dateIso; }
-}
+import AppShell from "@/components/common/AppShell";
+import PageHeader from "@/components/layout/PageHeader";
 
 const Notifications: React.FC = () => {
-  const [items, setItems] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [emailAlerts, setEmailAlerts] = useState(false);
+  const [desktopAlerts, setDesktopAlerts] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
 
-  const refresh = async () => {
-    try {
-      setLoading(true);
-      setErr(null);
-      const data = await listNotifications();
-      setItems(data);
-    } catch (e: any) {
-      setErr(e?.response?.data?.detail ?? "Chargement impossible");
-    } finally {
-      setLoading(false);
-    }
+  useEffect(()=>{
+    setEmailAlerts(localStorage.getItem("notif.email")==="1");
+    setDesktopAlerts(localStorage.getItem("notif.desktop")==="1");
+  }, []);
+
+  const askDesktopPermission = async () => {
+    if (!("Notification" in window)) return alert("Notifications non supportées.");
+    const perm = await Notification.requestPermission();
+    if (perm === "granted") setDesktopAlerts(true);
   };
 
-  useEffect(() => { refresh(); }, []);
-
-  const onMarkOne = async (id: number) => {
-    try {
-      setBusy(true);
-      await markNotificationRead(id);
-      setItems((prev) => prev.map(n => n.id === id ? { ...n, read_at: new Date().toISOString() } : n));
-    } finally {
-      setBusy(false);
-    }
+  const save = () => {
+    localStorage.setItem("notif.email", emailAlerts ? "1":"0");
+    localStorage.setItem("notif.desktop", desktopAlerts ? "1":"0");
+    setMsg("Préférences de notifications enregistrées (local).");
+    setTimeout(()=>setMsg(null), 1500);
   };
-
-  const onMarkAll = async () => {
-    try {
-      setBusy(true);
-      await markAllNotificationsRead();
-      setItems((prev) => prev.map(n => ({ ...n, read_at: new Date().toISOString() })));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const unreadCount = items.filter(n => !n.read_at).length;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-semibold">Notifications</h1>
-        <button
-          onClick={onMarkAll}
-          disabled={busy || unreadCount === 0}
-          className="px-3 py-2 rounded-xl border disabled:opacity-60"
-          title="Tout marquer comme lu"
-        >
-          Tout marquer comme lu {unreadCount > 0 ? `(${unreadCount})` : ""}
-        </button>
-      </div>
+    <AppShell>
+      <PageHeader title="Notifications" subtitle="Alertes email et bureau" />
+      <div className="px-6 sm:px-8 lg:px-12 xl:px-16 pb-10">
+        {msg && <div className="mb-4 p-2 bg-green-50 border border-green-200 rounded text-sm">{msg}</div>}
+        <div className="rounded-2xl bg-white border border-neutral-200 p-5 max-w-xl">
+          <label className="flex items-center gap-3">
+            <input type="checkbox" checked={emailAlerts} onChange={(e)=>setEmailAlerts(e.target.checked)} />
+            <span>Alertes par e-mail</span>
+          </label>
 
-      {loading && <div>Chargement…</div>}
-      {err && <div className="text-red-600">{err}</div>}
+          <div className="mt-4 flex items-center gap-3">
+            <input
+              type="checkbox"
+              checked={desktopAlerts}
+              onChange={(e)=>setDesktopAlerts(e.target.checked)}
+            />
+            <span>Notifications bureau</span>
+            {!desktopAlerts && (
+              <button
+                onClick={askDesktopPermission}
+                className="ml-2 px-3 py-1 rounded-lg border"
+              >
+                Autoriser
+              </button>
+            )}
+          </div>
 
-      {!loading && !err && (
-        <div className="space-y-3">
-          {items.length === 0 ? (
-            <div className="text-neutral-600">Aucune notification.</div>
-          ) : (
-            items.map((n) => {
-              const unread = !n.read_at;
-              return (
-                <div
-                  key={n.id}
-                  className={`border rounded-2xl p-4 ${unread ? "bg-yellow-50" : "bg-white"}`}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <div className="font-medium">{n.title}</div>
-                      {n.body && <div className="text-sm text-neutral-700 mt-1">{n.body}</div>}
-                      <div className="text-xs text-neutral-500 mt-2">{fmt(n.created_at)}</div>
-                      {n.link && (
-                        <a
-                          href={n.link}
-                          className="inline-block mt-2 text-blue-600"
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          Ouvrir
-                        </a>
-                      )}
-                    </div>
-                    <div className="shrink-0">
-                      {unread && (
-                        <button
-                          className="px-3 py-1 rounded-lg border"
-                          onClick={() => onMarkOne(n.id)}
-                          disabled={busy}
-                        >
-                          Marquer lu
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          )}
+          <button onClick={save} className="mt-6 px-4 py-2 border rounded-xl bg-emerald-700 text-white">
+            Enregistrer
+          </button>
         </div>
-      )}
-    </div>
+      </div>
+    </AppShell>
   );
 };
-
 export default Notifications;

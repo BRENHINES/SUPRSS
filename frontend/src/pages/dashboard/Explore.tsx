@@ -1,5 +1,8 @@
+// src/pages/Explore.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import AppShell from "@/components/common/AppShell";
+import PageHeader from "@/components/layout/PageHeader";
 import {
   getPopularFeeds,
   getTrendingArticles,
@@ -63,91 +66,87 @@ const Explore: React.FC = () => {
   };
 
   const header = useMemo(() => (
-    <div className="flex items-center gap-3 mb-6">
-      <h1 className="text-2xl font-semibold">Explorer</h1>
+    <div className="flex items-center gap-3">
       <form onSubmit={onSearch} className="ml-auto flex gap-2">
         <input
-          className="border rounded-xl px-3 py-2 w-64"
+          className="border rounded-xl px-3 py-2 w-64 bg-white"
           placeholder="Rechercher des flux ou articles…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
-        <button className="px-4 py-2 rounded-xl bg-black text-white">Rechercher</button>
+        <button className="px-4 py-2 rounded-xl bg-emerald-700 text-white">Rechercher</button>
       </form>
     </div>
   ), [q]);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      {header}
+    <AppShell>
+      <PageHeader title="Explorer" right={header} />
+      <div className="px-6 sm:px-8 lg:px-12 xl:px-16 pb-10">
+        {err && <div className="text-red-600 mb-4">{err}</div>}
+        {load && <div className="mb-4">Chargement…</div>}
 
-      {err && <div className="text-red-600 mb-4">{err}</div>}
-      {load && <div className="mb-4">Chargement…</div>}
-
-      {/* Catégories */}
-      {cats.length > 0 && (
-        <div className="mb-8">
-          <div className="text-sm text-neutral-600 mb-2">Catégories</div>
-          <div className="flex flex-wrap gap-2">
-            {cats.map((c) => (
-              <button
-                key={c}
-                onClick={() => setActiveCat((prev) => prev === c ? null : c)}
-                className={`px-3 py-1 rounded-full border ${
-                  activeCat === c ? "bg-black text-white" : "bg-white"
-                }`}
-              >
-                {c}
-              </button>
-            ))}
-          </div>
-
-          {activeCat && (
-            <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {byCat.map((f) => (
-                <FeedCard key={`${f.id}-${f.feed_url}`} feed={f} />
+        {/* Catégories */}
+        {cats.length > 0 && (
+          <div className="mb-8">
+            <div className="text-sm text-neutral-600 mb-2">Catégories</div>
+            <div className="flex flex-wrap gap-2">
+              {cats.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setActiveCat((prev) => prev === c ? null : c)}
+                  className={`px-3 py-1 rounded-full border ${activeCat === c ? "bg-emerald-700 text-white" : "bg-white"}`}
+                >
+                  {c}
+                </button>
               ))}
-              {byCat.length === 0 && !load && (
-                <div className="text-neutral-600">Aucun flux proposé.</div>
-              )}
             </div>
-          )}
-        </div>
-      )}
 
-      {/* Populaires */}
-      <section className="mb-10">
-        <h2 className="text-xl font-semibold mb-3">Flux populaires</h2>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {popular.map((f) => <FeedCard key={f.id} feed={f} />)}
-          {popular.length === 0 && !load && (
-            <div className="text-neutral-600">Aucun flux populaire.</div>
-          )}
-        </div>
-      </section>
-
-      {/* Tendances */}
-      <section>
-        <h2 className="text-xl font-semibold mb-3">Articles tendances</h2>
-        <div className="space-y-3">
-          {trending.map((a) => (
-            <Link
-              key={a.id}
-              to={`/articles/${a.id}`}
-              className="block border rounded-2xl p-4 hover:bg-neutral-50"
-            >
-              <div className="font-medium">{a.title}</div>
-              <div className="text-sm text-neutral-600">
-                {a.feed_title || "—"} {a.published_at ? `• ${new Date(a.published_at).toLocaleString()}` : ""}
+            {activeCat && (
+              <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {byCat.map((f) => <FeedCard key={`${f.id}-${f.feed_url}`} feed={f} />)}
+                {byCat.length === 0 && !load && (
+                  <div className="text-neutral-600">Aucun flux proposé.</div>
+                )}
               </div>
-            </Link>
-          ))}
-          {trending.length === 0 && !load && (
-            <div className="text-neutral-600">Rien de tendance pour l’instant.</div>
-          )}
-        </div>
-      </section>
-    </div>
+            )}
+          </div>
+        )}
+
+        {/* Populaires */}
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold mb-3">Flux populaires</h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {popular.map((f) => <FeedCard key={f.id} feed={f} />)}
+            {popular.length === 0 && !load && (
+              <div className="text-neutral-600">Aucun flux populaire.</div>
+            )}
+          </div>
+        </section>
+
+        {/* Tendances */}
+        <section>
+          <h2 className="text-xl font-semibold mb-3">Articles tendances</h2>
+          <div className="space-y-3">
+            {trending.map((a) => (
+              <Link
+                key={a.id}
+                to={`/articles/${a.id}`}
+                className="block border rounded-2xl p-4 hover:bg-neutral-50 bg-white"
+              >
+                <div className="font-medium text-teal-900">{a.title}</div>
+                <div className="text-sm text-neutral-600">
+                  {a.feed_title || "—"} {a.published_at ? `• ${new Date(a.published_at).toLocaleString()}` : ""}
+                </div>
+              </Link>
+            ))}
+            {trending.length === 0 && !load && (
+              <div className="text-neutral-600">Rien de tendance pour l’instant.</div>
+            )}
+          </div>
+        </section>
+      </div>
+    </AppShell>
   );
 };
 
@@ -157,17 +156,17 @@ const FeedCard: React.FC<{ feed: ExploreFeed }> = ({ feed }) => {
   const handleSub = async () => {
     try {
       setBusy(true);
-      await subscribeToFeed({ feed_id: feed.id }); // adapte si ton service attend un URL
+      await subscribeToFeed({ feed_id: feed.id, feed_url: feed.feed_url }); // accepte id OU url selon ton backend
       setOk(true);
-    } catch (e) {
-      // no-op visuel simple
+    } catch {
+      // toast/erreur si tu veux
     } finally {
       setBusy(false);
     }
   };
   return (
-    <div className="border rounded-2xl p-4">
-      <div className="font-medium">{feed.title}</div>
+    <div className="border rounded-2xl p-4 bg-white">
+      <div className="font-medium text-teal-900">{feed.title}</div>
       {feed.site_url && (
         <a href={feed.site_url} target="_blank" rel="noreferrer" className="text-sm text-blue-600">
           {feed.site_url}
@@ -180,7 +179,7 @@ const FeedCard: React.FC<{ feed: ExploreFeed }> = ({ feed }) => {
           disabled={busy || ok}
           className="px-3 py-1 rounded-xl border disabled:opacity-60"
         >
-          {ok ? "Abonné" : "S’abonner"}
+          {ok ? "Abonné" : busy ? "…" : "S’abonner"}
         </button>
         {typeof feed.followers === "number" && (
           <div className="text-xs text-neutral-600">{feed.followers} abonnés</div>
