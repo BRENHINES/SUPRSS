@@ -5,18 +5,18 @@ from pydantic import BaseModel, Field
 
 class CategoryCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=50)
-    color: Optional[str] = Field(None, description="Hex color, e.g. #36C")
-    icon: Optional[str] = None
-    description: Optional[str] = None
+    color: str | None = Field(None, description="Hex color, e.g. #36C")
+    icon: str | None = None
+    description: str | None = None
 
     model_config = {"from_attributes": True}
 
 
 class CategoryUpdate(BaseModel):
-    name: Optional[str] = Field(None, min_length=1, max_length=50)
-    color: Optional[str] = None
-    icon: Optional[str] = None
-    description: Optional[str] = None
+    name: str | None = Field(None, min_length=1, max_length=50)
+    color: str | None = None
+    icon: str | None = None
+    description: str | None = None
 
     model_config = {"from_attributes": True}
 
@@ -24,9 +24,9 @@ class CategoryUpdate(BaseModel):
 class CategoryOut(BaseModel):
     id: int
     name: str
-    color: Optional[str]
-    icon: Optional[str]
-    description: Optional[str]
+    color: str | None
+    icon: str | None
+    description: str | None
 
     model_config = {"from_attributes": True}
 

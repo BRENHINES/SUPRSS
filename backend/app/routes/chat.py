@@ -67,8 +67,8 @@ def _serialize(msg, counts: dict[str, int]) -> ChatOut:
 def list_messages(
     collection_id: int,
     limit: int = Query(50, ge=1, le=200),
-    before: Optional[datetime] = Query(None),
-    after: Optional[datetime] = Query(None),
+    before: datetime | None = Query(None),
+    after: datetime | None = Query(None),
     top_level_only: bool = Query(True),
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
@@ -93,7 +93,7 @@ def list_thread(
     collection_id: int,
     message_id: int,
     limit: int = Query(100, ge=1, le=500),
-    after: Optional[datetime] = Query(None),
+    after: datetime | None = Query(None),
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):

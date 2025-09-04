@@ -16,11 +16,11 @@ class Frequency(str, Enum):
 
 class FeedCreate(BaseModel):
     title: str = Field(..., min_length=1, max_length=200)
-    url: Union[HttpUrl, AnyUrl, str]
-    language: Optional[str] = None
-    update_frequency: Optional[Union[int, Frequency]] = Field(default=60)
-    priority: Optional[int] = Field(None, description="1..10, default 5")
-    category_names: List[str] = Field(default_factory=list)
+    url: HttpUrl | AnyUrl | str
+    language: str | None = None
+    update_frequency: int | Frequency | None = Field(default=60)
+    priority: int | None = Field(None, description="1..10, default 5")
+    category_names: list[str] = Field(default_factory=list)
 
     @field_validator("url", mode="before")
     @classmethod
@@ -46,12 +46,12 @@ class FeedCreate(BaseModel):
 
 
 class FeedUpdate(BaseModel):
-    title: Optional[str] = None
-    url: Optional[Union[HttpUrl, AnyUrl, str]] = None
-    language: Optional[str] = None
-    update_frequency: Optional[Union[int, Frequency]] = None
-    priority: Optional[int] = None
-    status: Optional[str] = Field(None, description="active/inactive/error/deleted")
+    title: str | None = None
+    url: HttpUrl | AnyUrl | str | None = None
+    language: str | None = None
+    update_frequency: int | Frequency | None = None
+    priority: int | None = None
+    status: str | None = Field(None, description="active/inactive/error/deleted")
 
     model_config = {"from_attributes": True}
 
@@ -60,7 +60,7 @@ class FeedOut(BaseModel):
     id: int
     title: str
     url: str
-    language: Optional[str]
+    language: str | None
     status: str
     update_frequency: int
     priority: int
@@ -68,7 +68,7 @@ class FeedOut(BaseModel):
     created_at: datetime
     collection_id: int
     created_by: int
-    categories: List[CategoryOut] = []
+    categories: list[CategoryOut] = []
 
     @field_validator("categories", mode="before")
     @classmethod
@@ -82,4 +82,4 @@ class FeedOut(BaseModel):
 
 
 class FeedAttachCategories(BaseModel):
-    category_ids: List[int] = Field(..., min_items=1)
+    category_ids: list[int] = Field(..., min_items=1)

@@ -1,4 +1,5 @@
-from typing import Optional, Sequence, Tuple
+from typing import Optional, Tuple
+from collections.abc import Sequence
 
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
@@ -11,7 +12,7 @@ from .base import SQLRepository
 class CollectionRepository(SQLRepository[Collection]):
     model = Collection
 
-    def get_by_id(self, collection_id: int) -> Optional[Collection]:
+    def get_by_id(self, collection_id: int) -> Collection | None:
         stmt = select(Collection).where(Collection.id == collection_id)
         return self.session.scalars(stmt).first()
 
@@ -19,10 +20,10 @@ class CollectionRepository(SQLRepository[Collection]):
         self,
         *,
         user_id: int,
-        q: Optional[str],
+        q: str | None,
         page: int,
         size: int,
-    ) -> Tuple[Sequence[Collection], int]:
+    ) -> tuple[Sequence[Collection], int]:
         # (owner) OR (member active)
         base = (
             select(Collection)
@@ -52,8 +53,8 @@ class CollectionRepository(SQLRepository[Collection]):
         return items, int(total or 0)
 
     def list_all(
-        self, *, q: Optional[str], page: int, size: int
-    ) -> Tuple[Sequence[Collection], int]:
+        self, *, q: str | None, page: int, size: int
+    ) -> tuple[Sequence[Collection], int]:
         stmt = select(Collection)
         if q:
             like = f"%{q.strip()}%"

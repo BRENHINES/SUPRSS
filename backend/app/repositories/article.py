@@ -1,5 +1,6 @@
 from datetime import datetime
-from typing import Optional, Sequence, Tuple
+from typing import Optional, Tuple
+from collections.abc import Sequence
 
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
@@ -12,19 +13,19 @@ from .base import SQLRepository
 class ArticleRepository(SQLRepository[Article]):
     model = Article
 
-    def get_by_id(self, article_id: int) -> Optional[Article]:
+    def get_by_id(self, article_id: int) -> Article | None:
         return self.session.get(Article, article_id)
 
     def list_by_feed(
         self,
         *,
         feed_id: int,
-        q: Optional[str],
-        from_date: Optional[datetime],
+        q: str | None,
+        from_date: datetime | None,
         page: int,
         size: int,
         order_desc: bool = True,
-    ) -> Tuple[Sequence[Article], int]:
+    ) -> tuple[Sequence[Article], int]:
         stmt = select(Article).where(Article.feed_id == feed_id)
         if q:
             like = f"%{q.strip()}%"
@@ -58,7 +59,7 @@ class ArticleRepository(SQLRepository[Article]):
         only_favorites: bool = False,
         page: int,
         size: int,
-    ) -> Tuple[Sequence[Article], int]:
+    ) -> tuple[Sequence[Article], int]:
         # articles d’une collection via join Feed ; filtre via UserArticle
         a = Article
         ua = UserArticle

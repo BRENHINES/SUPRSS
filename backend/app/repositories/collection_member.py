@@ -1,4 +1,5 @@
-from typing import Optional, Sequence, Tuple
+from typing import Optional, Tuple
+from collections.abc import Sequence
 
 from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session
@@ -10,13 +11,13 @@ class CollectionMemberRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_by_id(self, member_id: int) -> Optional[CollectionMember]:
+    def get_by_id(self, member_id: int) -> CollectionMember | None:
         stmt = select(CollectionMember).where(CollectionMember.id == member_id)
         return self.db.scalars(stmt).first()
 
     def get_membership(
         self, *, collection_id: int, user_id: int
-    ) -> Optional[CollectionMember]:
+    ) -> CollectionMember | None:
         stmt = select(CollectionMember).where(
             and_(
                 CollectionMember.collection_id == collection_id,
@@ -27,7 +28,7 @@ class CollectionMemberRepository:
 
     def list_for_collection(
         self, *, collection_id: int, page: int, size: int
-    ) -> Tuple[Sequence[CollectionMember], int]:
+    ) -> tuple[Sequence[CollectionMember], int]:
         stmt = select(CollectionMember).where(
             CollectionMember.collection_id == collection_id
         )
@@ -53,7 +54,7 @@ class CollectionMemberRepository:
         can_comment: bool = True,
         can_chat: bool = True,
         can_invite: bool = False,
-        invited_by: Optional[int] = None,
+        invited_by: int | None = None,
     ) -> CollectionMember:
         m = CollectionMember(
             collection_id=collection_id,

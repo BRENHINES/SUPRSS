@@ -1,6 +1,6 @@
 # backend/app/db/uow.py
 from contextlib import AbstractContextManager
-from typing import Callable, Generator
+from collections.abc import Callable, Generator
 
 from sqlalchemy.orm import Session
 

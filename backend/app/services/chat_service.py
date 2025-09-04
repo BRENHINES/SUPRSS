@@ -1,5 +1,6 @@
 from datetime import datetime
-from typing import Optional, Sequence, Tuple
+from typing import Optional, Tuple
+from collections.abc import Sequence
 
 from fastapi import HTTPException, status
 from sqlalchemy import select
@@ -38,7 +39,7 @@ class ChatService:
         collection_id: int,
         author_id: int,
         content: str,
-        reply_to_id: Optional[int]
+        reply_to_id: int | None
     ) -> ChatMessage:
         self._assert_member(collection_id=collection_id, user_id=author_id)
         m = self.chat.create(
@@ -88,8 +89,8 @@ class ChatService:
         collection_id: int,
         user_id: int,
         limit: int = 50,
-        before: Optional[datetime] = None,
-        after: Optional[datetime] = None,
+        before: datetime | None = None,
+        after: datetime | None = None,
         top_level_only: bool = True
     ):
         self._ensure_member(collection_id, user_id)
@@ -110,7 +111,7 @@ class ChatService:
         root_id: int,
         user_id: int,
         limit: int = 100,
-        after: Optional[datetime] = None
+        after: datetime | None = None
     ):
         self._ensure_member(collection_id, user_id)
         items = self.messages.list_thread(
@@ -127,8 +128,8 @@ class ChatService:
         author_id: int,
         content: str,
         message_type: str,
-        reply_to_id: Optional[int],
-        metadata_json: Optional[str]
+        reply_to_id: int | None,
+        metadata_json: str | None
     ) -> ChatMessage:
         self._ensure_member(collection_id, author_id)
         content = content.strip()

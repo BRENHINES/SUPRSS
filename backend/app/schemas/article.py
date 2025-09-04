@@ -9,10 +9,10 @@ class ArticleOut(BaseModel):
     title: str
     url: str
     guid: str
-    author: Optional[str]
-    summary: Optional[str]
-    published_at: Optional[datetime]
-    image_url: Optional[str]
+    author: str | None
+    summary: str | None
+    published_at: datetime | None
+    image_url: str | None
     total_reads: int
     total_favorites: int
     total_comments: int
@@ -25,8 +25,8 @@ class ArticleUserState(BaseModel):
     is_read: bool = False
     is_favorite: bool = False
     is_archived: bool = False
-    user_notes: Optional[str] = None
-    user_rating: Optional[int] = None  # 1-5
+    user_notes: str | None = None
+    user_rating: int | None = None  # 1-5
 
 
 class ArticleWithState(BaseModel):
@@ -35,8 +35,8 @@ class ArticleWithState(BaseModel):
 
 
 class InteractionUpdate(BaseModel):
-    is_read: Optional[bool] = None
-    is_favorite: Optional[bool] = None
-    is_archived: Optional[bool] = None
-    user_notes: Optional[str] = None
-    user_rating: Optional[int] = Field(None, ge=1, le=5)
+    is_read: bool | None = None
+    is_favorite: bool | None = None
+    is_archived: bool | None = None
+    user_notes: str | None = None
+    user_rating: int | None = Field(None, ge=1, le=5)

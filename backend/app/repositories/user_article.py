@@ -1,4 +1,5 @@
-from typing import Optional, Sequence, Tuple
+from typing import Optional, Tuple
+from collections.abc import Sequence
 
 from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session
@@ -10,7 +11,7 @@ class UserArticleRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def get(self, *, user_id: int, article_id: int) -> Optional[UserArticle]:
+    def get(self, *, user_id: int, article_id: int) -> UserArticle | None:
         stmt = select(UserArticle).where(
             and_(UserArticle.user_id == user_id, UserArticle.article_id == article_id)
         )
@@ -34,12 +35,12 @@ class UserArticleRepository:
         self,
         *,
         user_id: int,
-        is_read: Optional[bool] = None,
-        is_favorite: Optional[bool] = None,
-        is_archived: Optional[bool] = None,
+        is_read: bool | None = None,
+        is_favorite: bool | None = None,
+        is_archived: bool | None = None,
         page: int,
         size: int,
-    ) -> Tuple[Sequence[UserArticle], int]:
+    ) -> tuple[Sequence[UserArticle], int]:
         stmt = select(UserArticle).where(UserArticle.user_id == user_id)
         if is_read is not None:
             stmt = stmt.where(UserArticle.is_read == is_read)

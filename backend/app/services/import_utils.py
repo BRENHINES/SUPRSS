@@ -7,13 +7,13 @@ import xml.etree.ElementTree as ET
 from typing import Dict, List
 
 
-def parse_opml_feeds(data: bytes) -> List[Dict[str, str]]:
+def parse_opml_feeds(data: bytes) -> list[dict[str, str]]:
     """
     Retourne une liste de {title, url} depuis un contenu OPML.
     On extrait les attributs 'xmlUrl' des <outline>.
     """
     root = ET.fromstring(data)
-    out: List[Dict[str, str]] = []
+    out: list[dict[str, str]] = []
     for node in root.iter("outline"):
         url = node.attrib.get("xmlUrl") or node.attrib.get("xmlurl")
         if url:
@@ -22,7 +22,7 @@ def parse_opml_feeds(data: bytes) -> List[Dict[str, str]]:
     return out
 
 
-def parse_json_feeds(data: bytes) -> List[Dict[str, str]]:
+def parse_json_feeds(data: bytes) -> list[dict[str, str]]:
     js = json.loads(data.decode("utf-8"))
     # attend soit {"feeds":[{"title":..., "url":...}, ...]} soit liste directe
     items = js.get("feeds", js)
@@ -34,7 +34,7 @@ def parse_json_feeds(data: bytes) -> List[Dict[str, str]]:
     return out
 
 
-def parse_csv_feeds(data: bytes) -> List[Dict[str, str]]:
+def parse_csv_feeds(data: bytes) -> list[dict[str, str]]:
     f = io.StringIO(data.decode("utf-8"))
     reader = csv.DictReader(f)
     out = []

@@ -1,5 +1,6 @@
 from datetime import datetime
-from typing import Iterable, Optional, Sequence, Tuple
+from typing import Optional, Tuple
+from collections.abc import Iterable, Sequence
 
 from sqlalchemy import asc, desc, func, select
 from sqlalchemy.orm import Session
@@ -18,8 +19,8 @@ class ChatRepository:
         author_id: int,
         content: str,
         message_type: MessageType = MessageType.TEXT,
-        reply_to_id: Optional[int] = None,
-        metadata_json: Optional[str] = None,
+        reply_to_id: int | None = None,
+        metadata_json: str | None = None,
     ) -> ChatMessage:
         m = ChatMessage(
             collection_id=collection_id,
@@ -33,12 +34,12 @@ class ChatRepository:
         self.db.flush()
         return m
 
-    def get_by_id(self, mid: int) -> Optional[ChatMessage]:
+    def get_by_id(self, mid: int) -> ChatMessage | None:
         return self.db.get(ChatMessage, mid)
 
     def list_for_collection(
         self, *, collection_id: int, page: int, size: int
-    ) -> Tuple[Sequence[ChatMessage], int]:
+    ) -> tuple[Sequence[ChatMessage], int]:
         stmt = select(ChatMessage).where(
             ChatMessage.collection_id == collection_id, ChatMessage.is_deleted == False
         )  # noqa: E712
@@ -55,8 +56,8 @@ class ChatRepository:
         collection_id: int,
         *,
         limit: int = 50,
-        before: Optional[datetime] = None,
-        after: Optional[datetime] = None,
+        before: datetime | None = None,
+        after: datetime | None = None,
         top_level_only: bool = True,
     ) -> Sequence[ChatMessage]:
         stmt = select(ChatMessage).where(ChatMessage.collection_id == collection_id)
@@ -75,7 +76,7 @@ class ChatRepository:
         root_id: int,
         *,
         limit: int = 100,
-        after: Optional[datetime] = None,
+        after: datetime | None = None,
     ) -> Sequence[ChatMessage]:
         stmt = select(ChatMessage).where(
             ChatMessage.collection_id == collection_id,

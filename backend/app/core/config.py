@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     # ------------------------------------------------------------------ #
     # CORS
     # ------------------------------------------------------------------ #
-    CORS_ORIGINS: List[str] = Field(default_factory=list, env="CORS_ORIGINS")
+    CORS_ORIGINS: list[str] = Field(default_factory=list, env="CORS_ORIGINS")
 
     # ------------------------------------------------------------------ #
     # DATABASE
@@ -89,7 +89,7 @@ class Settings(BaseSettings):
     from_name: str = Field(default="SUPRSS", env="FROM_NAME")
 
     @classmethod
-    def _split_or_list(cls, v: Union[str, List[str]]) -> List[str]:
+    def _split_or_list(cls, v: str | list[str]) -> list[str]:
         if isinstance(v, str) and not v.startswith("["):
             return [i.strip() for i in v.split(",") if i]
         return v if isinstance(v, list) else []

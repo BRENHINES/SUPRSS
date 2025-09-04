@@ -21,7 +21,7 @@ class AuthService:
         self.users = UserRepository(db)
         self.sessions = SessionRepository(db)
 
-    def _find_user_by_login(self, username_or_email: str) -> Optional[User]:
+    def _find_user_by_login(self, username_or_email: str) -> User | None:
         if "@" in username_or_email:
             return self.users.get_by_email(username_or_email)
         return self.users.get_by_username(username_or_email)
@@ -31,9 +31,9 @@ class AuthService:
         *,
         username_or_email: str,
         password: str,
-        user_agent: Optional[str],
-        ip: Optional[str]
-    ) -> Tuple[str, int, str, str]:
+        user_agent: str | None,
+        ip: str | None
+    ) -> tuple[str, int, str, str]:
         user = self._find_user_by_login(username_or_email)
         if (
             not user
@@ -69,8 +69,8 @@ class AuthService:
         return access_token, access_ttl, refresh_token, refresh_exp.isoformat()
 
     def refresh(
-        self, *, refresh_token: str, user_agent: Optional[str], ip: Optional[str]
-    ) -> Tuple[str, int, str, str]:
+        self, *, refresh_token: str, user_agent: str | None, ip: str | None
+    ) -> tuple[str, int, str, str]:
         payload = decode_refresh(refresh_token)
         user_id = int(payload["sub"])
         sid = int(payload["sid"])

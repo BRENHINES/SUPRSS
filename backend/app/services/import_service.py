@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Callable, Dict, List, Optional
+from typing import Dict, List, Optional
+from collections.abc import Callable
 
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
@@ -12,7 +13,7 @@ from ..repositories.import_job import ImportJobRepository
 from ..services.feed_service import FeedService  # tu l'as déjà
 from .import_utils import parse_csv_feeds, parse_json_feeds, parse_opml_feeds
 
-PARSERS: dict[FileFormat, Callable[[bytes], List[Dict[str, str]]]] = {
+PARSERS: dict[FileFormat, Callable[[bytes], list[dict[str, str]]]] = {
     FileFormat.OPML: parse_opml_feeds,
     FileFormat.JSON: parse_json_feeds,
     FileFormat.CSV: parse_csv_feeds,
@@ -32,8 +33,8 @@ class ImportService:
         user_id: int,
         filename: str,
         file_format: FileFormat,
-        file_size: Optional[int],
-        target_collection_id: Optional[int],
+        file_size: int | None,
+        target_collection_id: int | None,
         override_existing: bool,
     ) -> ImportJob:
         if not target_collection_id:

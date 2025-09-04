@@ -15,8 +15,8 @@ class SessionRepository:
         *,
         user_id: int,
         refresh_token_hash: str,
-        user_agent: Optional[str],
-        ip_address: Optional[str],
+        user_agent: str | None,
+        ip_address: str | None,
         expires_at: datetime
     ) -> UserSession:
         s = UserSession(
@@ -31,7 +31,7 @@ class SessionRepository:
         self.db.flush()  # pour obtenir l'id
         return s
 
-    def get_active_by_id(self, session_id: int) -> Optional[UserSession]:
+    def get_active_by_id(self, session_id: int) -> UserSession | None:
         return (
             self.db.query(UserSession)
             .filter(UserSession.id == session_id, UserSession.is_active == True)
@@ -39,7 +39,7 @@ class SessionRepository:
         )
 
     def revoke(
-        self, session: UserSession, *, replaced_by: Optional[int] = None
+        self, session: UserSession, *, replaced_by: int | None = None
     ) -> None:
         session.is_active = False
         session.revoked_at = datetime.now()

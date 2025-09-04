@@ -1,4 +1,5 @@
-from typing import Optional, Sequence, Tuple
+from typing import Optional, Tuple
+from collections.abc import Sequence
 
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
@@ -10,12 +11,12 @@ class CommentRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_by_id(self, comment_id: int) -> Optional[Comment]:
+    def get_by_id(self, comment_id: int) -> Comment | None:
         return self.db.get(Comment, comment_id)
 
     def list_for_article(
         self, article_id: int, *, page: int = 1, size: int = 50
-    ) -> Tuple[Sequence[Comment], int]:
+    ) -> tuple[Sequence[Comment], int]:
         stmt = (
             select(Comment)
             .where(Comment.article_id == article_id)
@@ -37,7 +38,7 @@ class CommentRepository:
         article_id: int,
         author_id: int,
         content: str,
-        parent_id: Optional[int],
+        parent_id: int | None,
         thread_level: int
     ) -> Comment:
         c = Comment(

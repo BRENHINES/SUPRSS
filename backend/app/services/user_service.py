@@ -20,9 +20,9 @@ class UserService:
     def _ensure_unique(
         self,
         *,
-        email: Optional[str],
-        username: Optional[str],
-        exclude_id: Optional[int] = None
+        email: str | None,
+        username: str | None,
+        exclude_id: int | None = None
     ) -> None:
         if email:
             existing = self.users.get_by_email(email)
@@ -39,7 +39,7 @@ class UserService:
                 )
 
     def create_user(
-        self, *, email: str, username: str, password: Optional[str], **extras
+        self, *, email: str, username: str, password: str | None, **extras
     ) -> User:
         # Pré-check applicatif (meilleurs messages + UX)
         self._ensure_unique(email=email, username=username)
@@ -84,9 +84,9 @@ class UserService:
         self,
         user_id: int,
         *,
-        email: Optional[str] = None,
-        username: Optional[str] = None,
-        password: Optional[str] = None,
+        email: str | None = None,
+        username: str | None = None,
+        password: str | None = None,
         **extra
     ) -> User:
         user = self.users.get_by_id(user_id)

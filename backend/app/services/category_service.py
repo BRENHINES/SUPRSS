@@ -22,9 +22,9 @@ class CategoryService:
         self,
         *,
         name: str,
-        color: Optional[str],
-        icon: Optional[str],
-        description: Optional[str]
+        color: str | None,
+        icon: str | None,
+        description: str | None
     ) -> Category:
         name_n = _norm_name(name)
         if self.categories.get_by_name(name_n):
@@ -42,10 +42,10 @@ class CategoryService:
         self,
         category_id: int,
         *,
-        name: Optional[str],
-        color: Optional[str],
-        icon: Optional[str],
-        description: Optional[str]
+        name: str | None,
+        color: str | None,
+        icon: str | None,
+        description: str | None
     ) -> Category:
         cat = self.categories.get_by_id(category_id)
         if not cat:
@@ -95,7 +95,7 @@ class CategoryService:
         self.db.commit()
         return affected
 
-    def list_with_counts(self, *, search: Optional[str], page: int, size: int):
+    def list_with_counts(self, *, search: str | None, page: int, size: int):
         rows, total = self.categories.list_with_counts(
             search=search, page=page, size=size
         )

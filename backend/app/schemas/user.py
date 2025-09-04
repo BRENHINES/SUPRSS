@@ -10,9 +10,9 @@ from backend.app.models.user import FontSize, UserTheme
 class UserBase(BaseModel):
     username: str
     email: EmailStr
-    full_name: Optional[str] = None
-    bio: Optional[str] = None
-    avatar_url: Optional[str] = None
+    full_name: str | None = None
+    bio: str | None = None
+    avatar_url: str | None = None
 
 
 class UserOut(BaseModel):
@@ -21,9 +21,9 @@ class UserOut(BaseModel):
     id: int
     email: EmailStr
     username: str
-    full_name: Optional[str] = None
-    avatar_url: Optional[str] = None
-    bio: Optional[str] = None
+    full_name: str | None = None
+    avatar_url: str | None = None
+    bio: str | None = None
     is_active: bool
     is_verified: bool
     is_superuser: bool
@@ -32,25 +32,25 @@ class UserOut(BaseModel):
 class UserCreate(BaseModel):
     email: EmailStr
     username: str = Field(min_length=3, max_length=50)
-    password: Optional[str] = Field(default=None, min_length=6)
-    full_name: Optional[str] = None
-    avatar_url: Optional[str] = None
-    bio: Optional[str] = None
+    password: str | None = Field(default=None, min_length=6)
+    full_name: str | None = None
+    avatar_url: str | None = None
+    bio: str | None = None
 
 
 class UserUpdate(BaseModel):
-    email: Optional[str] = None
-    username: Optional[str] = None
-    password: Optional[str] = None
-    full_name: Optional[str] = None
-    avatar_url: Optional[str] = None
-    bio: Optional[str] = None
-    is_active: Optional[bool] = None
-    is_superuser: Optional[bool] = None
-    theme: Optional[UserTheme] = None
-    font_size: Optional[FontSize] = None
-    articles_per_page: Optional[int] = None
-    auto_mark_read: Optional[bool] = None
+    email: str | None = None
+    username: str | None = None
+    password: str | None = None
+    full_name: str | None = None
+    avatar_url: str | None = None
+    bio: str | None = None
+    is_active: bool | None = None
+    is_superuser: bool | None = None
+    theme: UserTheme | None = None
+    font_size: FontSize | None = None
+    articles_per_page: int | None = None
+    auto_mark_read: bool | None = None
 
 
 class UserFlagsUpdate(BaseModel):

@@ -49,7 +49,7 @@ def google_start():
 @router.get("/google/callback")
 async def google_callback(
     request: Request,
-    code: Optional[str] = None,
+    code: str | None = None,
     db: Session = Depends(get_db),
 ):
     if not code:
@@ -151,7 +151,7 @@ def github_start():
 @router.get("/github/callback")
 async def github_callback(
     request: Request,
-    code: Optional[str] = None,
+    code: str | None = None,
     db: Session = Depends(get_db),
 ):
     if not code:
@@ -181,7 +181,7 @@ async def github_callback(
         userinfo = u.json()
 
         # 3) /user/emails pour obtenir un email vérifié
-        primary_verified: Optional[str] = None
+        primary_verified: str | None = None
         e = await client.get(GITHUB_EMAILS_URL, headers={"Authorization": f"Bearer {access_token}"})
         if e.status_code == 200:
             emails = e.json() or []

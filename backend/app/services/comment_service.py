@@ -1,4 +1,5 @@
-from typing import Optional, Sequence, Tuple
+from typing import Optional, Tuple
+from collections.abc import Sequence
 
 from fastapi import HTTPException, status
 from sqlalchemy import update
@@ -25,8 +26,8 @@ class CommentService:
         return a
 
     def _ensure_parent_in_same_article(
-        self, article_id: int, parent_id: Optional[int]
-    ) -> Tuple[Optional[Comment], int]:
+        self, article_id: int, parent_id: int | None
+    ) -> tuple[Comment | None, int]:
         if not parent_id:
             return None, 0
         p = self.comments.get_by_id(parent_id)
@@ -38,12 +39,12 @@ class CommentService:
 
     def list_for_article(
         self, article_id: int, *, page: int = 1, size: int = 50
-    ) -> Tuple[Sequence[Comment], int]:
+    ) -> tuple[Sequence[Comment], int]:
         self._ensure_article(article_id)
         return self.comments.list_for_article(article_id, page=page, size=size)
 
     def create(
-        self, *, article_id: int, author_id: int, content: str, parent_id: Optional[int]
+        self, *, article_id: int, author_id: int, content: str, parent_id: int | None
     ) -> Comment:
         self._ensure_article(article_id)
         parent, level = self._ensure_parent_in_same_article(article_id, parent_id)

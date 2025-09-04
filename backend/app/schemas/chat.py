@@ -7,13 +7,13 @@ from pydantic import BaseModel, Field
 class ChatCreate(BaseModel):
     content: str = Field(..., min_length=1, max_length=2000)
     message_type: str = Field("TEXT", description="TEXT|SYSTEM|ARTICLE_SHARE|FEED_ADD")
-    reply_to_id: Optional[int] = None
-    metadata_json: Optional[str] = None  # brut si besoin
+    reply_to_id: int | None = None
+    metadata_json: str | None = None  # brut si besoin
 
 
 class ChatUpdate(BaseModel):
-    content: Optional[str] = Field(None, min_length=1)
-    is_deleted: Optional[bool] = None
+    content: str | None = Field(None, min_length=1)
+    is_deleted: bool | None = None
 
 
 class ReactionRequest(BaseModel):
@@ -26,11 +26,11 @@ class ChatOut(BaseModel):
     author_id: int
     content: str
     message_type: str
-    reply_to_id: Optional[int] = None
+    reply_to_id: int | None = None
     is_edited: bool
     is_deleted: bool
     created_at: datetime
-    updated_at: Optional[datetime] = None
-    reactions: Dict[str, int] = {}
+    updated_at: datetime | None = None
+    reactions: dict[str, int] = {}
 
     model_config = {"from_attributes": True}

@@ -1,4 +1,5 @@
-from typing import List, Optional, Sequence, Tuple
+from typing import List, Optional, Tuple
+from collections.abc import Sequence
 
 from sqlalchemy import and_, delete, func, insert, select
 from sqlalchemy.orm import Session
@@ -11,7 +12,7 @@ from .base import SQLRepository
 class CategoryRepository(SQLRepository[Category]):
     model = Category
 
-    def ids_by_names(self, names: List[str]) -> List[int]:
+    def ids_by_names(self, names: list[str]) -> list[int]:
         if not names:
             return []
         stmt = select(Category.id).where(
@@ -19,17 +20,17 @@ class CategoryRepository(SQLRepository[Category]):
         )
         return [row[0] for row in self.session.execute(stmt).all()]
 
-    def get_by_id(self, category_id: int) -> Optional[Category]:
+    def get_by_id(self, category_id: int) -> Category | None:
         stmt = select(Category).where(Category.id == category_id)
         return self.session.scalars(stmt).first()
 
-    def get_by_name(self, name: str) -> Optional[Category]:
+    def get_by_name(self, name: str) -> Category | None:
         stmt = select(Category).where(Category.name == name)
         return self.session.scalars(stmt).first()
 
     def list_paginated(
-        self, *, search: Optional[str], page: int, size: int
-    ) -> Tuple[Sequence[Category], int]:
+        self, *, search: str | None, page: int, size: int
+    ) -> tuple[Sequence[Category], int]:
         stmt = select(Category)
         if search:
             like = f"%{search.strip()}%"
@@ -39,7 +40,7 @@ class CategoryRepository(SQLRepository[Category]):
         items = self.session.scalars(stmt).all()
         return items, int(total or 0)
 
-    def list_with_counts(self, *, search: Optional[str], page: int, size: int):
+    def list_with_counts(self, *, search: str | None, page: int, size: int):
         """
         Retourne une liste de dicts: {category: Category, feeds_count: int} + total
         (On laisse le service mapper vers le schema Pydantic)

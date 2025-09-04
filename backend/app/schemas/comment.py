@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 class CommentCreate(BaseModel):
     content: str = Field(..., min_length=1)
-    parent_id: Optional[int] = None
+    parent_id: int | None = None
 
 
 class CommentUpdate(BaseModel):
@@ -17,12 +17,12 @@ class CommentOut(BaseModel):
     id: int
     article_id: int
     author_id: int
-    parent_id: Optional[int] = None
+    parent_id: int | None = None
     thread_level: int
-    content: Optional[str] = None
+    content: str | None = None
     is_edited: bool
     is_deleted: bool
     upvotes: int
     downvotes: int
     created_at: datetime
-    updated_at: Optional[datetime] = None
+    updated_at: datetime | None = None

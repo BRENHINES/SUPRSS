@@ -63,7 +63,7 @@ async def create_user(data: UserCreate, db: Session = Depends(get_db)):
     return user
 
 
-@router.get("", response_model=List[UserOut], operation_id="users_list")
+@router.get("", response_model=list[UserOut], operation_id="users_list")
 def list_users(
     response: Response,
     page: int = Query(1, ge=1),

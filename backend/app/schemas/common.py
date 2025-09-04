@@ -9,8 +9,8 @@ class ErrorResponse(BaseModel):
         ..., description="Code d'erreur lisible par la machine (ex: ResourceNotFound)"
     )
     message: str = Field(..., description="Message lisible par l'humain")
-    details: Optional[Any] = Field(None, description="Détails (validation, contexte…)")
-    request_id: Optional[str] = Field(None, description="ID de corrélation (optionnel)")
+    details: Any | None = Field(None, description="Détails (validation, contexte…)")
+    request_id: str | None = Field(None, description="ID de corrélation (optionnel)")
 
 
 class PageMeta(BaseModel):

@@ -1,4 +1,5 @@
-from typing import Iterable, Optional, Tuple
+from typing import Optional, Tuple
+from collections.abc import Iterable
 from urllib.parse import urlparse, urlunparse
 
 from fastapi import HTTPException, status
@@ -43,9 +44,9 @@ class FeedService:
         url: str,
         collection_id: int,
         created_by: int,
-        language: Optional[str],
-        update_frequency: Optional[int],
-        priority: Optional[int],
+        language: str | None,
+        update_frequency: int | None,
+        priority: int | None,
         category_names=None,
     ) -> Feed:
 

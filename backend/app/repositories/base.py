@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Generic, Mapping, Sequence, Type, TypeVar
+from typing import Any, Generic, Type, TypeVar
+from collections.abc import Mapping, Sequence
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -11,7 +12,7 @@ ModelT = TypeVar("ModelT")
 class SQLRepository(Generic[ModelT]):
     """Repo générique sync pour une entité SQLAlchemy."""
 
-    model: Type[ModelT]
+    model: type[ModelT]
 
     def __init__(self, session: Session):
         self.session = session

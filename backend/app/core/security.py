@@ -30,7 +30,7 @@ def _now() -> datetime:
 
 
 def create_access_token(
-    sub: str, extra: Optional[Dict[str, Any]] = None
+    sub: str, extra: dict[str, Any] | None = None
 ) -> tuple[str, int]:
     exp = _now() + timedelta(minutes=settings.access_token_expire_minutes)
     payload = {

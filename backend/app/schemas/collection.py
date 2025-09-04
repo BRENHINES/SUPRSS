@@ -6,8 +6,8 @@ from pydantic import BaseModel, Field
 
 class CollectionCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
-    description: Optional[str] = None
-    slug: Optional[str] = Field(None, min_length=1, max_length=100)
+    description: str | None = None
+    slug: str | None = Field(None, min_length=1, max_length=100)
     is_public: bool = False
     is_personal: bool = True
     allow_comments: bool = True
@@ -18,14 +18,14 @@ class CollectionCreate(BaseModel):
 
 
 class CollectionUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    slug: Optional[str] = None
-    is_public: Optional[bool] = None
-    is_personal: Optional[bool] = None
-    allow_comments: Optional[bool] = None
-    allow_chat: Optional[bool] = None
-    auto_fetch_feeds: Optional[bool] = None
+    name: str | None = None
+    description: str | None = None
+    slug: str | None = None
+    is_public: bool | None = None
+    is_personal: bool | None = None
+    allow_comments: bool | None = None
+    allow_chat: bool | None = None
+    auto_fetch_feeds: bool | None = None
 
     model_config = {"from_attributes": True}
 
@@ -33,8 +33,8 @@ class CollectionUpdate(BaseModel):
 class CollectionOut(BaseModel):
     id: int
     name: str
-    description: Optional[str]
-    slug: Optional[str]
+    description: str | None
+    slug: str | None
     is_public: bool
     is_personal: bool
     total_feeds: int
@@ -42,8 +42,8 @@ class CollectionOut(BaseModel):
     total_members: int
     owner_id: int
     created_at: datetime
-    updated_at: Optional[datetime]
-    last_activity: Optional[datetime]
+    updated_at: datetime | None
+    last_activity: datetime | None
 
     model_config = {"from_attributes": True}
 
@@ -62,15 +62,15 @@ class MemberAdd(BaseModel):
 
 
 class MemberUpdate(BaseModel):
-    is_admin: Optional[bool] = None
-    is_active: Optional[bool] = None
-    can_read: Optional[bool] = None
-    can_add_feeds: Optional[bool] = None
-    can_edit_feeds: Optional[bool] = None
-    can_delete_feeds: Optional[bool] = None
-    can_comment: Optional[bool] = None
-    can_chat: Optional[bool] = None
-    can_invite: Optional[bool] = None
+    is_admin: bool | None = None
+    is_active: bool | None = None
+    can_read: bool | None = None
+    can_add_feeds: bool | None = None
+    can_edit_feeds: bool | None = None
+    can_delete_feeds: bool | None = None
+    can_comment: bool | None = None
+    can_chat: bool | None = None
+    can_invite: bool | None = None
 
 
 class MemberOut(BaseModel):
@@ -87,6 +87,6 @@ class MemberOut(BaseModel):
     can_chat: bool
     can_invite: bool
     joined_at: datetime
-    last_activity: Optional[datetime]
+    last_activity: datetime | None
 
     model_config = {"from_attributes": True}

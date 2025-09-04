@@ -92,7 +92,7 @@ class FetchService:
         self._mark_success(feed, inserted)
         return {"ok": True, "inserted": inserted, "status": 200}
 
-    def _coerce_date(self, entry) -> Optional[datetime]:
+    def _coerce_date(self, entry) -> datetime | None:
         dt = entry.get("published_parsed") or entry.get("updated_parsed")
         if not dt:
             return None

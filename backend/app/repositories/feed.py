@@ -1,4 +1,5 @@
-from typing import Iterable, Optional, Sequence, Tuple
+from typing import Optional, Tuple
+from collections.abc import Iterable, Sequence
 
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session, joinedload, selectinload
@@ -11,7 +12,7 @@ from .base import SQLRepository
 class FeedRepository(SQLRepository[Feed]):
     model = Feed
 
-    def get_by_id(self, feed_id: int) -> Optional[Feed]:
+    def get_by_id(self, feed_id: int) -> Feed | None:
         stmt = (
             select(Feed)
             .options(joinedload(Feed.categories).joinedload(FeedCategory.category))
@@ -21,7 +22,7 @@ class FeedRepository(SQLRepository[Feed]):
 
     def get_by_url_in_collection(
         self, *, collection_id: int, url: str
-    ) -> Optional[Feed]:
+    ) -> Feed | None:
         stmt = select(Feed).where(
             and_(Feed.collection_id == collection_id, Feed.url == url)
         )
@@ -31,11 +32,11 @@ class FeedRepository(SQLRepository[Feed]):
         self,
         *,
         collection_id: int,
-        status: Optional[str],
-        q: Optional[str],
+        status: str | None,
+        q: str | None,
         page: int,
         size: int,
-    ) -> Tuple[Sequence[Feed], int]:
+    ) -> tuple[Sequence[Feed], int]:
         stmt = (
             select(Feed)
             .where(Feed.collection_id == collection_id)

@@ -1,4 +1,5 @@
-from typing import Optional, Sequence, Tuple
+from typing import Optional, Tuple
+from collections.abc import Sequence
 
 from fastapi import HTTPException, status
 from sqlalchemy import select, update
@@ -40,7 +41,7 @@ class ArticleService:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed")
 
     # ---- queries ----
-    def get_article(self, *, article_id: int, user_id: Optional[int] = None) -> Article:
+    def get_article(self, *, article_id: int, user_id: int | None = None) -> Article:
         a = self.articles.get_by_id(article_id)
         if not a:
             raise HTTPException(
@@ -52,7 +53,7 @@ class ArticleService:
         return a
 
     def list_feed_articles(
-        self, *, feed_id: int, q: Optional[str], from_date, page: int, size: int
+        self, *, feed_id: int, q: str | None, from_date, page: int, size: int
     ):
         return self.articles.list_by_feed(
             feed_id=feed_id, q=q, from_date=from_date, page=page, size=size
@@ -64,11 +65,11 @@ class ArticleService:
         *,
         article_id: int,
         user_id: int,
-        is_read: Optional[bool],
-        is_favorite: Optional[bool],
-        is_archived: Optional[bool],
-        user_notes: Optional[str],
-        user_rating: Optional[int],
+        is_read: bool | None,
+        is_favorite: bool | None,
+        is_archived: bool | None,
+        user_notes: str | None,
+        user_rating: int | None,
     ) -> UserArticle:
         a = self.get_article(article_id=article_id, user_id=user_id)
         ua = self.ua_repo.get_or_create(user_id=user_id, article_id=a.id)

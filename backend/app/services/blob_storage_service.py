@@ -84,9 +84,9 @@ def make_avatar_blob_name(user_id: int, filename: str) -> str:
 
 def generate_avatar_upload_sas(user_id: int, filename: str, content_type: str):
     # contrôle rapide du content-type
-    allowed = set(
-        [t.strip() for t in (settings.azure_avatar_allowed_types or []) if t.strip()]
-    )
+    allowed = {
+        t.strip() for t in (settings.azure_avatar_allowed_types or []) if t.strip()
+    }
     if allowed and content_type not in allowed:
         raise ValueError("Unsupported content-type")
 

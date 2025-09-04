@@ -22,8 +22,8 @@ router = APIRouter(prefix="/api", tags=["Articles"])
 @router.get("/feeds/{feed_id}/articles", response_model=list[ArticleOut])
 def list_feed_articles(
     feed_id: int,
-    q: Optional[str] = Query(None),
-    from_date: Optional[datetime] = Query(None),
+    q: str | None = Query(None),
+    from_date: datetime | None = Query(None),
     page: int = Query(1, ge=1),
     size: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
@@ -126,18 +126,18 @@ def _apply_sort(stmt, sort: str | None):
 
 @router.get("/articles", response_model=list[ArticleOut])
 def list_articles(
-    collection_id: Optional[int] = None,
-    feed_id: Optional[int] = None,
-    q: Optional[str] = None,
-    language: Optional[str] = None,
-    date_from: Optional[datetime] = Query(None),
-    date_to: Optional[datetime] = Query(None),
+    collection_id: int | None = None,
+    feed_id: int | None = None,
+    q: str | None = None,
+    language: str | None = None,
+    date_from: datetime | None = Query(None),
+    date_to: datetime | None = Query(None),
     unread_only: bool = False,
     favorite_only: bool = False,
     archived_only: bool = False,
     page: int = Query(1, ge=1),
     size: int = Query(20, ge=1, le=100),
-    sort: Optional[str] = "-published_at",
+    sort: str | None = "-published_at",
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
@@ -203,7 +203,7 @@ def list_feed_articles(fid: int, **kwargs):
 # -------- Bulk actions --------
 class BulkIds(BaseModel):
     ids: list[int] = Field(..., min_items=1)
-    value: Optional[bool] = True  # pour read/archive: True par défaut
+    value: bool | None = True  # pour read/archive: True par défaut
 
 
 @router.post("/articles/bulk/read")
