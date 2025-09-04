@@ -40,7 +40,7 @@ export async function refreshFeed(id: number | string) {
   await api.post(`/api/feeds/${id}/refresh`, {});
 }
 
-export async function subscribeToFeed(p: { feed_id: number }) {
+export async function subscribeToFeed(p: { feed_id: number; feed_url: string | undefined }) {
   const { data } = await api.post("/api/feeds/subscribe", p);
   return data;
 }

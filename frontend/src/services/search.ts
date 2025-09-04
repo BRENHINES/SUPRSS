@@ -1,16 +1,12 @@
 // src/services/search.ts
-import { api } from "./api";
-import type { Article } from "./articles";
-
-export type SearchResult = Article & { score?: number };
-
-export async function searchArticles(
-  q: string,
-  opts?: { page?: number; size?: number }
-) {
-  const { page = 1, size = 20 } = opts || {};
-  const { data } = await api.get<SearchResult[]>("/api/search", {
-    params: { q, page, size },
-  });
-  return data;
+import axios from "axios";
+export type SearchResult = { id: string; title: string; feed_title?: string };
+export async function searchArticles(q: string): Promise<SearchResult[]> {
+  const base = (import.meta.env.VITE_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
+  try {
+    const { data } = await axios.get(`${base}/api/search`, { params: { q } });
+    return Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
 }
